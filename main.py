@@ -914,6 +914,66 @@ def main():
                 # Per-approach CSV was also saved under outputs/<APPROACH>_summary.csv
                 st.info(f"Per-approach summary saved to outputs/{approach.upper()}_summary.csv")
     
+    # Batch processing for four approaches (simplified)
+    with st.expander("📦 Batch: Process four approach videos (NB/SB/EB/WB)"):
+        st.markdown("Upload up to four videos below. We'll process them one by one and save per-approach CSVs plus a combined summary map for your notebook.")
+        batch_inputs = {}
+        for appr in ["NB", "SB", "EB", "WB"]:
+            st.markdown(f"##### {appr}")
+            file_obj = st.file_uploader(
+                f"Video for {appr}", type=['mp4','avi','mov','mkv'], key=f"batch_file_{appr}"
+            )
+            invert_b = st.checkbox(f"Invert inbound direction ({appr})", value=False, key=f"batch_invert_{appr}")
+            colb1, colb2 = st.columns(2)
+            start_frame_b = colb1.number_input(f"{appr} Start frame", min_value=0, value=0, key=f"batch_start_{appr}")
+            end_frame_b = colb2.number_input(f"{appr} End frame (0=end)", min_value=0, value=0, key=f"batch_end_{appr}")
+            batch_inputs[appr] = {
+                'file': file_obj,
+                'invert': invert_b,
+                'start': int(start_frame_b),
+                'end': int(end_frame_b),
+            }
+
+        if st.button("🚀 Process All Four", type="primary", key="btn_process_all_four"):
+            batch_results = {}
+            os.makedirs('outputs', exist_ok=True)
+            for appr, cfg in batch_inputs.items():
+                if cfg['file'] is None:
+                    continue
+                file_bytes = cfg['file'].getvalue() if hasattr(cfg['file'], 'getvalue') else cfg['file'].read()
+                video_like = io.BytesIO(file_bytes)
+                res = process_video(
+                    video_like,
+                    model,
+                    create_annotated_video=False,
+                    min_frames=min_frames,
+                    min_distance=min_distance,
+                    max_disappeared=max_disappeared,
+                    approach_name=appr,
+                    stopline=stopline_coords if use_stopline else None,
+                    mask_path=None,
+                    invert_stopline=cfg['invert'],
+                    start_frame=cfg['start'],
+                    end_frame=cfg['end'],
+                    crossing_tolerance=crossing_tolerance,
+                    min_normal_motion=min_normal_motion,
+                )
+                if res:
+                    batch_results[appr] = {
+                        'vehicle_counts': res['vehicle_counts'],
+                        'total_pcu': res['total_pcu'],
+                        'duration': res['duration']
+                    }
+            if batch_results:
+                import json
+                with open('outputs/intersection_summary.json', 'w', encoding='utf-8') as f:
+                    json.dump(batch_results, f, ensure_ascii=False, indent=2)
+                rows = []
+                for appr, data in batch_results.items():
+                    rows.append({'Approach': appr, 'Total PCU': data['total_pcu']})
+                pd.DataFrame(rows).to_csv('outputs/intersection_summary.csv', index=False)
+                st.success("Batch completed. Saved outputs/intersection_summary.json and outputs/intersection_summary.csv")
+
     # Display results from session state if available (for when app re-runs after download)
     if st.session_state.results is not None:
         st.markdown("---")
