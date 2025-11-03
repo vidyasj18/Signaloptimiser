@@ -1,0 +1,23 @@
+{
+  "NB": {
+    "vehicle_counts": {"car": 120, "truck": 8, "bus": 5, "motorcycle": 60, "bicycle": 10},
+    "total_pcu": 194.0,
+    "duration": 600.0
+  },
+  "SB": {
+    "vehicle_counts": {"car": 100, "truck": 6, "bus": 4, "motorcycle": 55, "bicycle": 8},
+    "total_pcu": 161.5,
+    "duration": 600.0
+  },
+  "EB": {
+    "vehicle_counts": {"car": 150, "truck": 10, "bus": 6, "motorcycle": 80, "bicycle": 12},
+    "total_pcu": 244.0,
+    "duration": 600.0
+  },
+  "WB": {
+    "vehicle_counts": {"car": 130, "truck": 7, "bus": 5, "motorcycle": 70, "bicycle": 9},
+    "total_pcu": 205.5,
+    "duration": 600.0
+  }
+}
+
