@@ -1,3 +1,66 @@
+# Signal Optimiser (PSU → Timings)
+
+This repository estimates signal timings from approach-level traffic demand (Passenger Car Units, PSU). The main script is `final.py`, which reads approach totals and outputs a 2‑phase plan (NS vs EW) with per‑approach Green/Amber/Red and a phase‑timeline chart.
+
+## What `final.py` does
+- Reads approach PSUs (N,S,E,W) from `outputs/intersection_summary.json` produced by the Streamlit app.
+- Computes the signal cycle length using a Webster-based relationship between degree of saturation (Y) and cycle.
+- Splits the effective green between NS and EW proportionally to demand; then splits within each approach proportionally.
+- Renders an exclusive phase timeline (when NS is green/amber, EW is red, and vice versa) with optional all‑red between phases.
+
+## Inputs
+`outputs/intersection_summary.json` (example):
+```json
+{
+  "NB": {"vehicle_counts": {"car": 120}, "total_pcu": 194.0, "duration": 600.0},
+  "SB": {"vehicle_counts": {"car": 100}, "total_pcu": 161.5, "duration": 600.0},
+  "EB": {"vehicle_counts": {"car": 150}, "total_pcu": 244.0, "duration": 600.0},
+  "WB": {"vehicle_counts": {"car": 130}, "total_pcu": 205.5, "duration": 600.0}
+}
+```
+`final.py` maps NB/SB/EB/WB → N/S/E/W via `total_pcu`. Missing approaches are treated as absent (works for T‑junctions).
+
+## How to run
+```bash
+# in a virtualenv
+pip install -r requirements.txt
+python final.py
+```
+- If `outputs/intersection_summary.json` exists, it will be used automatically and echoed in the console.
+- The script prints cycle, per‑approach G/A/R, and shows a Plotly phase timeline.
+
+## Key parameters and assumptions
+- DEFAULT_LANES: default lanes per approach for capacity (used in data synthesis and Webster ML; can be adjusted).
+- SAT_PER_LANE: 1800 PCU/hr/lane (typical design value; tune per context).
+- DEFAULT_LOST_TIME: 12 s (startup + change intervals per cycle).
+- YELLOW (Amber): 3 s (fixed per approach in current model).
+- ALL_RED: 2 s between phases (safety clearance).
+
+## Method (high level)
+1) Degree of saturation and cycle (Webster):
+   - Compute total demand `Q = N + S + E + W` (PSU/hr).
+   - Compute capacity `C_cap = (#present_approaches * lanes * sat_per_lane)`.
+   - Degree of saturation `Y = Q / C_cap` (capped at 0.95).
+   - Cycle `C = (1.5*L + 5) / (1 - Y)`, clamped to [60, 180] s.
+2) Green splits:
+   - Effective green `G_eff = C - L`.
+   - Phase split: `G_NS = G_eff * (NS/(NS+EW))`, `G_EW = G_eff - G_NS`.
+   - Approach split (proportional within the phase group).
+3) Timings:
+   - Each approach: Green, Amber (fixed), Red = C − (G + Amber).
+   - Phase timeline: NS (green→amber) → All‑red → EW (green→amber) → All‑red.
+
+## Notes on Indian practice (IRC)
+- Passenger Car Units (PCU) factors and saturation flows are drawn from IRC guidance; common references include:
+  - IRC:106 — Guidelines for Capacity of Urban Roads in Plain Areas.
+  - IRC:SP:41 — Guidelines for the Design of At‑Grade Intersections in Rural & Urban Areas.
+  - IRC:SP:90 — Manual on Road Traffic Signal Control.
+- Webster’s method is standard for fixed‑time optimisation; Indian practice often adapts:
+  - Saturation flow per lane (typical 1800 PCU/hr/lane, adjust for local conditions).
+  - Lost time (startup + change intervals), amber and all‑red durations per IRC signal design tables.
+
+Please confirm the exact edition/sections required by your course; the above are the commonly cited manuals for Indian signal design. Replace constants to match the jurisdiction and site calibration.
+
 # Vehicle Counting & PCU Calculator
 
 A machine learning-based application that detects vehicles in video footage and calculates Passenger Car Units (PCU) based on IRC 106-1990 standards using YOLOv8 and Streamlit.
