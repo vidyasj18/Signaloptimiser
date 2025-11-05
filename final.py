@@ -1,4 +1,4 @@
-# Inputs source: try to read outputs/intersection_summary.json; fall back to hardcoded PSUs
+# Inputs source: try to read outputs/intersection_summary.json; fall back to hardcoded PCUs
 import json
 import os
 
@@ -14,8 +14,11 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 
+# PCU = {"N": 2542.0, "S": 2760.0, "E": 0.0, "W": 1500.0}
+PCU = {"N": 2880.0, "S": 2760.0, "E": 1560.0, "W": 3480.0}
+
 # Attempt to load totals from outputs/intersection_summary.json
-def load_psu_from_summary(path: str = 'outputs/intersection_summary.json'):
+def load_pcu_from_summary(path: str = 'intersection_summary.json'):
     try:
         if not os.path.exists(path):
             return None
@@ -23,7 +26,7 @@ def load_psu_from_summary(path: str = 'outputs/intersection_summary.json'):
             summary = json.load(f)
         # Map NB/SB/EB/WB -> N/S/E/W using 'total_pcu'
         mapping = {"NB": "N", "SB": "S", "EB": "E", "WB": "W"}
-        psu = {m: 0.0 for m in mapping.values()}
+        pcu = {m: 0.0 for m in mapping.values()}
         for k_raw, v in summary.items():
             key = mapping.get(k_raw)
             if key is None:
@@ -32,17 +35,17 @@ def load_psu_from_summary(path: str = 'outputs/intersection_summary.json'):
                 total_pcu = float(v.get('total_pcu', 0.0))
             except Exception:
                 total_pcu = 0.0
-            psu[key] = total_pcu
-        return psu
+            pcu[key] = total_pcu
+        return pcu
     except Exception:
         return None
 
-loaded = load_psu_from_summary()
+loaded = load_pcu_from_summary()
 if loaded:
-    PSU.update(loaded)
-    print(f"Loaded PSU from outputs/intersection_summary.json (cwd={os.getcwd()}): {PSU}")
+    PCU.update(loaded)
+    print(f"Loaded PCU from outputs/intersection_summary.json (cwd={os.getcwd()}): {PCU}")
 else:
-    print(f"Using fallback PSU (cwd={os.getcwd()}): {PSU}")
+    print(f"Using fallback PCU (cwd={os.getcwd()}): {PCU}")
 
 # Helper: Webster cycle from total flow and capacity (synthetic ground truth)
 def webster_cycle_from_capacity(total_flow, capacity, L=DEFAULT_LOST_TIME):
@@ -71,11 +74,11 @@ def split_greens(C, N, S, E, W, L=DEFAULT_LOST_TIME):
 rng = np.random.default_rng(42)
 rows = []
 for _ in range(2000):
-    # random PSUs per approach (reasonably wide range)
-    N = float(rng.integers(100, 1200))
-    S = float(rng.integers(100, 1200))
-    E = float(rng.integers(100, 1200))
-    W = float(rng.integers(100, 1200))
+    # random PCUs per approach (reasonably wide range)
+    N = float(rng.integers(100, 4000))
+    S = float(rng.integers(100, 4000))
+    E = float(rng.integers(100, 4000))
+    W = float(rng.integers(100, 4000))
     total = N + S + E + W
     # Assume all 4 approaches present in synthetic generation
     capacity = 4 * DEFAULT_LANES * SAT_PER_LANE
@@ -96,18 +99,18 @@ X_cycle = df[["NS", "EW"]].values
 y_cycle = df["cycle"].values
 cycle_model = LinearRegression().fit(X_cycle, y_cycle)
 
-# 2b) Greens per approach from approach PSUs (nonlinear)
+# 2b) Greens per approach from approach PCUs (nonlinear)
 X_greens = df[["N", "S", "E", "W"]].values
 y_greens = df[["gN", "gS", "gE", "gW"]].values
 green_model = RandomForestRegressor(n_estimators=300, random_state=42)
 green_model.fit(X_greens, y_greens)
 
-# 3) Predict for your hardcoded PSUs (auto-handle missing approaches e.g., T-junction)
-N = float(PSU.get("N", 0.0))
-S = float(PSU.get("S", 0.0))
-E = float(PSU.get("E", 0.0))
-W = float(PSU.get("W", 0.0))
-present_keys = [k for k in ["N","S","E","W"] if PSU.get(k, 0.0) > 0]
+# 3) Predict for your hardcoded PCUs (auto-handle missing approaches e.g., T-junction)
+N = float(PCU.get("N", 0.0))
+S = float(PCU.get("S", 0.0))
+E = float(PCU.get("E", 0.0))
+W = float(PCU.get("W", 0.0))
+present_keys = [k for k in ["N","S","E","W"] if PCU.get(k, 0.0) > 0]
 NS, EW = N + S, E + W
 
 # Cycle: prefer ML estimate on NS/EW, then clamp
@@ -143,8 +146,8 @@ if E > 0: sched["EB"] = dict(zip(["green","amber","red"], gyr(gE)))
 if W > 0: sched["WB"] = dict(zip(["green","amber","red"], gyr(gW)))
 
 # 5) Pretty print
-print("=== Inputs (PSU) ===")
-print(PSU)
+print("=== Inputs (PCU) ===")
+print(PCU)
 print("\n=== Predicted Cycle ===")
 print(f"{sched['cycle_length']:.2f} s")
 print("\n=== Per-approach timings (s) ===")
