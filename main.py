@@ -95,6 +95,13 @@ PCU_FACTORS = {
     'toothbrush': 0.0,     # Not a vehicle
 }
 
+# Timing/capacity defaults (used by simulator/Webster planning)
+DEFAULT_LANES = 2           # lanes per approach
+SAT_PER_LANE = 1800         # PCU/hr/lane
+DEFAULT_LOST_TIME = 12.0    # seconds per cycle (startup + change intervals)
+YELLOW = 3.0                # seconds (amber)
+ALL_RED = 2.0              # seconds all-red clearance
+
 # Vehicle class mapping for YOLO
 VEHICLE_CLASSES = {
     2: 'car',      # car
@@ -103,6 +110,11 @@ VEHICLE_CLASSES = {
     7: 'truck',    # truck
     1: 'bicycle',  # bicycle
 }
+
+DEFAULT_LANES = 2           # lanes per approach (used for cycle load)
+SAT_PER_LANE = 1800         # PCU/hr/lane
+DEFAULT_LOST_TIME = 12.0    # s
+YELLOW = 3.0   
 
 class VehicleTracker:
     """Simple vehicle tracking to avoid double counting"""
@@ -934,6 +946,7 @@ def main():
         warmup_s = st.number_input("Warm-up seconds", min_value=5, max_value=60, value=20)
         frame_stride_sim = st.slider("Frame stride", 1, 5, 3)
         brain = st.selectbox("Brain", ["ML (default)", "Webster"], index=0)
+        light_mode = st.checkbox("Light mode (MVP): micro-sampling, no charts", value=False)
         # One stopline per video
         st.markdown("Define stoplines per approach (ignored if no video).")
         sl = {}
@@ -1093,9 +1106,9 @@ def main():
             cycle_hist = [plan1['cycle']]
             gns_hist = [plan1['g_NS']]
             gew_hist = [plan1['g_EW']]
-            line_ph = st.empty()
-            bar_ph = st.empty()
-            next_ph = st.empty()
+            line_ph = st.empty() if not light_mode else None
+            bar_ph = st.empty() if not light_mode else None
+            next_ph = st.empty() if not light_mode else None
 
             # Main loop
             last_rates = [rate1]
@@ -1108,40 +1121,50 @@ def main():
                 plan_next = plan_from_pcu(avg_rate)
 
                 # Preview next plan
-                with next_ph.container():
-                    try:
-                        fig2 = go.Figure()
-                        Cn = plan_next['cycle']
-                        gNSn = plan_next['g_NS']; gEWn = plan_next['g_EW']
-                        t2 = 0.0
-                        if gNSn>0:
-                            fig2.add_trace(go.Bar(x=[gNSn], y=["NS"], orientation='h', base=t2, marker_color="#2ecc71", name='green'))
-                            t2 += gNSn
-                            fig2.add_trace(go.Bar(x=[YELLOW], y=["NS"], orientation='h', base=t2, marker_color="#f1c40f", name='amber'))
-                            t2 += YELLOW
-                        if gNSn>0 and gEWn>0:
-                            fig2.add_trace(go.Bar(x=[ALL_RED], y=["NS"], orientation='h', base=t2, marker_color="#e74c3c", name='red'))
-                            fig2.add_trace(go.Bar(x=[ALL_RED], y=["EW"], orientation='h', base=t2, marker_color="#e74c3c", showlegend=False))
-                            t2 += ALL_RED
-                        if gEWn>0:
-                            fig2.add_trace(go.Bar(x=[gEWn], y=["EW"], orientation='h', base=t2, marker_color="#2ecc71", showlegend=False))
-                            t2 += gEWn
-                            fig2.add_trace(go.Bar(x=[YELLOW], y=["EW"], orientation='h', base=t2, marker_color="#f1c40f", showlegend=False))
-                            t2 += YELLOW
-                        if t2 < Cn:
-                            tail2 = Cn - t2
-                            fig2.add_trace(go.Bar(x=[tail2], y=["NS"], orientation='h', base=t2, marker_color="#e74c3c", showlegend=False))
-                            fig2.add_trace(go.Bar(x=[tail2], y=["EW"], orientation='h', base=t2, marker_color="#e74c3c", showlegend=False))
-                        fig2.update_layout(barmode='stack', title=f"Next Cycle Preview — C={Cn:.1f}s", xaxis_title='Time (s)', yaxis_title='Phase Group', height=300)
-                        st.plotly_chart(fig2, use_container_width=True)
-                    except Exception:
-                        pass
+                if not light_mode and next_ph is not None:
+                    with next_ph.container():
+                        try:
+                            fig2 = go.Figure()
+                            Cn = plan_next['cycle']
+                            gNSn = plan_next['g_NS']; gEWn = plan_next['g_EW']
+                            t2 = 0.0
+                            if gNSn>0:
+                                fig2.add_trace(go.Bar(x=[gNSn], y=["NS"], orientation='h', base=t2, marker_color="#2ecc71", name='green'))
+                                t2 += gNSn
+                                fig2.add_trace(go.Bar(x=[YELLOW], y=["NS"], orientation='h', base=t2, marker_color="#f1c40f", name='amber'))
+                                t2 += YELLOW
+                            if gNSn>0 and gEWn>0:
+                                fig2.add_trace(go.Bar(x=[ALL_RED], y=["NS"], orientation='h', base=t2, marker_color="#e74c3c", name='red'))
+                                fig2.add_trace(go.Bar(x=[ALL_RED], y=["EW"], orientation='h', base=t2, marker_color="#e74c3c", showlegend=False))
+                                t2 += ALL_RED
+                            if gEWn>0:
+                                fig2.add_trace(go.Bar(x=[gEWn], y=["EW"], orientation='h', base=t2, marker_color="#2ecc71", showlegend=False))
+                                t2 += gEWn
+                                fig2.add_trace(go.Bar(x=[YELLOW], y=["EW"], orientation='h', base=t2, marker_color="#f1c40f", showlegend=False))
+                                t2 += YELLOW
+                            if t2 < Cn:
+                                tail2 = Cn - t2
+                                fig2.add_trace(go.Bar(x=[tail2], y=["NS"], orientation='h', base=t2, marker_color="#e74c3c", showlegend=False))
+                                fig2.add_trace(go.Bar(x=[tail2], y=["EW"], orientation='h', base=t2, marker_color="#e74c3c", showlegend=False))
+                            fig2.update_layout(barmode='stack', title=f"Next Cycle Preview — C={Cn:.1f}s", xaxis_title='Time (s)', yaxis_title='Phase Group', height=300)
+                            st.plotly_chart(fig2, use_container_width=True)
+                        except Exception:
+                            pass
 
                 # Execute this plan cycle
                 T_end2 = T + plan_next['cycle']
                 pcu_cycle = {}
-                for appr in ["N","S","E","W"]:
-                    pcu_cycle[appr] = count_slice(sim_inputs[appr], T, min(T_end2, sim_horizon), sl[appr]["line"], sl[appr]["invert"]) if sim_inputs.get(appr) else 0.0
+                if light_mode:
+                    # Micro-sample first 2 seconds and extrapolate
+                    sample_end = min(T + 2.0, sim_horizon)
+                    sample_dur = max(0.0, sample_end - T)
+                    for appr in ["N","S","E","W"]:
+                        val = count_slice(sim_inputs[appr], T, sample_end, sl[appr]["line"], sl[appr]["invert"]) if sim_inputs.get(appr) else 0.0
+                        rate = (val / sample_dur) if sample_dur > 0 else 0.0
+                        pcu_cycle[appr] = rate * plan_next['cycle']
+                else:
+                    for appr in ["N","S","E","W"]:
+                        pcu_cycle[appr] = count_slice(sim_inputs[appr], T, min(T_end2, sim_horizon), sl[appr]["line"], sl[appr]["invert"]) if sim_inputs.get(appr) else 0.0
                 dur_k = float(max(0.0, min(T_end2, sim_horizon) - T))
                 rate_k = {k: (pcu_cycle[k]/dur_k if dur_k>0 else 0.0) for k in ["N","S","E","W"]}
                 last_rates.append(rate_k)
@@ -1155,7 +1178,8 @@ def main():
                 gns_hist.append(plan_next['g_NS'])
                 gew_hist.append(plan_next['g_EW'])
                 # Charts
-                with line_ph.container():
+                if not light_mode and line_ph is not None:
+                    with line_ph.container():
                     try:
                         figL = go.Figure()
                         figL.add_trace(go.Scatter(y=cycle_hist, x=list(range(1, len(cycle_hist)+1)), mode='lines+markers', name='Cycle'))
@@ -1163,7 +1187,8 @@ def main():
                         st.plotly_chart(figL, use_container_width=True)
                     except Exception:
                         pass
-                with bar_ph.container():
+                if not light_mode and bar_ph is not None:
+                    with bar_ph.container():
                     try:
                         figB = go.Figure()
                         figB.add_trace(go.Bar(y=gns_hist, x=list(range(1, len(gns_hist)+1)), name='g_NS'))
