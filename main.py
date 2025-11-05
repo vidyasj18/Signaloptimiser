@@ -1025,6 +1025,9 @@ def main():
                 # Use rate directly as planning load (Webster scales internally)
                 plan = plan_from_pcu(rate)
             st.success("Warm-up complete. Showing next cycle plan (preview):")
+            # Show warm-up PCU totals and per-second rates
+            st.markdown("**Warm-up PCU (totals)**: " + str({k: round(v,2) for k,v in pcu.items()}))
+            st.markdown("**Warm-up PCU rate (per sec)**: " + str({k: round(v,3) for k,v in rate.items()}))
             st.write({k: (round(v,2) if isinstance(v,float) else v) for k,v in plan.items()})
             # Preview phase diagram
             try:
@@ -1162,9 +1165,21 @@ def main():
                         val = count_slice(sim_inputs[appr], T, sample_end, sl[appr]["line"], sl[appr]["invert"]) if sim_inputs.get(appr) else 0.0
                         rate = (val / sample_dur) if sample_dur > 0 else 0.0
                         pcu_cycle[appr] = rate * plan_next['cycle']
+                    # Light mode progress print
+                    st.markdown("**[Light] Cycle sample (2s) PCU**: " + str({k: round(v,2) for k,v in pcu_cycle.items()}))
                 else:
-                    for appr in ["N","S","E","W"]:
-                        pcu_cycle[appr] = count_slice(sim_inputs[appr], T, min(T_end2, sim_horizon), sl[appr]["line"], sl[appr]["invert"]) if sim_inputs.get(appr) else 0.0
+                    # Chunked counting with status logs every ~2s
+                    chunk = 2.0
+                    t_chunk_start = T
+                    pcu_cycle = {"N":0.0,"S":0.0,"E":0.0,"W":0.0}
+                    while t_chunk_start < min(T_end2, sim_horizon):
+                        t_chunk_end = min(t_chunk_start + chunk, T_end2, sim_horizon)
+                        for appr in ["N","S","E","W"]:
+                            inc = count_slice(sim_inputs[appr], t_chunk_start, t_chunk_end, sl[appr]["line"], sl[appr]["invert"]) if sim_inputs.get(appr) else 0.0
+                            pcu_cycle[appr] += inc
+                        # Status print for this chunk
+                        st.markdown(f"Chunk {t_chunk_start-T:.0f}-{t_chunk_end-T:.0f}s PCU: " + str({k: round(v,2) for k,v in pcu_cycle.items()}))
+                        t_chunk_start = t_chunk_end
                 dur_k = float(max(0.0, min(T_end2, sim_horizon) - T))
                 rate_k = {k: (pcu_cycle[k]/dur_k if dur_k>0 else 0.0) for k in ["N","S","E","W"]}
                 last_rates.append(rate_k)
