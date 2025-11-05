@@ -337,6 +337,7 @@ def process_video(
     end_frame: int = 0,
     crossing_tolerance: int = 5,
     min_normal_motion: int = 4,
+    frame_stride: int = 1,
 ):
     """Process video and return vehicle counts and PCU data"""
     # Create temporary file
@@ -405,6 +406,11 @@ def process_video(
             if start_frame + frame_count >= end_frame:
                 break
             
+            # Apply frame stride (process every Nth frame)
+            if frame_stride and frame_stride > 1:
+                if ((current_frame_index - start_frame) % frame_stride) != 0:
+                    continue
+
             # Run YOLO detection (optionally masked for visualization only; detection still on full frame)
             results = model(frame, verbose=False)
             
@@ -914,6 +920,260 @@ def main():
                 # Per-approach CSV was also saved under outputs/<APPROACH>_summary.csv
                 st.info(f"Per-approach summary saved to outputs/{approach.upper()}_summary.csv")
     
+    # ===========================
+    # 🧠 Adaptive Simulator (beta)
+    # ===========================
+    with st.expander("🧠 Adaptive Simulator (beta)", expanded=False):
+        st.markdown("Simulate cycle-by-cycle plans. Warm-up 20s; stride defaults to 3.")
+        # Videos per approach
+        sim_inputs = {}
+        cols = st.columns(4)
+        for i, appr in enumerate(["N", "S", "E", "W"]):
+            with cols[i]:
+                sim_inputs[appr] = st.file_uploader(f"{appr} video", type=["mp4","avi","mov","mkv"], key=f"sim_vid_{appr}")
+        warmup_s = st.number_input("Warm-up seconds", min_value=5, max_value=60, value=20)
+        frame_stride_sim = st.slider("Frame stride", 1, 5, 3)
+        brain = st.selectbox("Brain", ["ML (default)", "Webster"], index=0)
+        # One stopline per video
+        st.markdown("Define stoplines per approach (ignored if no video).")
+        sl = {}
+        for appr in ["N","S","E","W"]:
+            with st.expander(f"Stopline for {appr}"):
+                c1, c2, c3, c4 = st.columns(4)
+                ax_ = c1.number_input(f"{appr} Ax", min_value=0, value=0, key=f"{appr}_ax")
+                ay_ = c2.number_input(f"{appr} Ay", min_value=0, value=480, key=f"{appr}_ay")
+                bx_ = c3.number_input(f"{appr} Bx", min_value=0, value=1919, key=f"{appr}_bx")
+                by_ = c4.number_input(f"{appr} By", min_value=0, value=480, key=f"{appr}_by")
+                inv_ = st.checkbox(f"Invert {appr}", value=False, key=f"{appr}_inv")
+                sl[appr] = {"line": ((int(ax_), int(ay_)), (int(bx_), int(by_))), "invert": inv_}
+
+        # Helper: count PCU in [start_s, end_s] for one video
+        def count_slice(file_obj, start_s, end_s, line, invert):
+            if file_obj is None:
+                return 0.0
+            fb = file_obj.getvalue() if hasattr(file_obj, 'getvalue') else file_obj.read()
+            # Probe fps
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
+                tmp.write(fb)
+                p = tmp.name
+            cap = cv2.VideoCapture(p)
+            fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+            cap.release()
+            try:
+                os.unlink(p)
+            except Exception:
+                pass
+            start_f = int(float(start_s) * fps)
+            end_f = int(float(end_s) * fps)
+            # Local defaults to avoid dependency on other UI controls
+            min_frames_sim = 5
+            min_distance_sim = 100
+            max_disappeared_sim = 30
+            res = process_video(
+                io.BytesIO(fb), model, False, min_frames_sim, min_distance_sim, max_disappeared_sim,
+                approach_name=None,
+                stopline=line,
+                mask_path=None,
+                invert_stopline=invert,
+                start_frame=start_f,
+                end_frame=end_f,
+                crossing_tolerance=5,
+                min_normal_motion=4,
+                frame_stride=frame_stride_sim,
+            )
+            return res['total_pcu'] if res else 0.0
+
+        # Brain: Webster fallback (ML wrapper can plug in later)
+        def plan_from_pcu(pcu_dict):
+            N, S, E, W = [pcu_dict.get(x, 0.0) for x in ['N','S','E','W']]
+            NS, EW = N+S, E+W
+            num_present = sum(1 for v in [N,S,E,W] if v > 0)
+            capacity = max(1, num_present) * DEFAULT_LANES * SAT_PER_LANE
+            Y = min((NS+EW)/capacity if capacity>0 else 0.0, 0.95)
+            C = (1.5*DEFAULT_LOST_TIME + 5)/(1-Y) if Y < 0.95 else 180.0
+            C = float(np.clip(C, 60.0, 180.0))
+            eff = max(0.0, C-DEFAULT_LOST_TIME)
+            g_NS = eff * (NS/(NS+EW)) if (NS+EW) > 0 else 0.0
+            g_EW = eff - g_NS
+            split = {}
+            split['NB'] = g_NS * (N/NS) if NS>0 and N>0 else 0.0
+            split['SB'] = g_NS * (S/NS) if NS>0 and S>0 else 0.0
+            split['EB'] = g_EW * (E/EW) if EW>0 and E>0 else 0.0
+            split['WB'] = g_EW * (W/EW) if EW>0 and W>0 else 0.0
+            return {"cycle": C, "g_NS": g_NS, "g_EW": g_EW, **split}
+
+        if st.button("▶️ Start Simulation", type="primary", key="btn_start_sim"):
+            with st.spinner("Running warm-up slice..."):
+                pcu = {}
+                for appr in ["N","S","E","W"]:
+                    pcu[appr] = count_slice(sim_inputs[appr], 0.0, float(warmup_s), sl[appr]["line"], sl[appr]["invert"]) if sim_inputs.get(appr) else 0.0
+                # Convert to per-second rate
+                rate = {k: (v/float(warmup_s)) for k,v in pcu.items()}
+                # Use rate directly as planning load (Webster scales internally)
+                plan = plan_from_pcu(rate)
+            st.success("Warm-up complete. Showing next cycle plan (preview):")
+            st.write({k: (round(v,2) if isinstance(v,float) else v) for k,v in plan.items()})
+            # Preview phase diagram
+            try:
+                fig = go.Figure()
+                C = plan['cycle']
+                gNS = plan['g_NS']; gEW = plan['g_EW']
+                t = 0.0
+                if gNS>0:
+                    fig.add_trace(go.Bar(x=[gNS], y=["NS"], orientation='h', base=t, marker_color="#2ecc71", name='green'))
+                    t += gNS
+                    fig.add_trace(go.Bar(x=[YELLOW], y=["NS"], orientation='h', base=t, marker_color="#f1c40f", name='amber'))
+                    t += YELLOW
+                if gNS>0 and gEW>0:
+                    fig.add_trace(go.Bar(x=[ALL_RED], y=["NS"], orientation='h', base=t, marker_color="#e74c3c", name='red'))
+                    fig.add_trace(go.Bar(x=[ALL_RED], y=["EW"], orientation='h', base=t, marker_color="#e74c3c", showlegend=False))
+                    t += ALL_RED
+                if gEW>0:
+                    fig.add_trace(go.Bar(x=[gEW], y=["EW"], orientation='h', base=t, marker_color="#2ecc71", showlegend=False))
+                    t += gEW
+                    fig.add_trace(go.Bar(x=[YELLOW], y=["EW"], orientation='h', base=t, marker_color="#f1c40f", showlegend=False))
+                    t += YELLOW
+                if t < C:
+                    tail = C - t
+                    fig.add_trace(go.Bar(x=[tail], y=["NS"], orientation='h', base=t, marker_color="#e74c3c", showlegend=False))
+                    fig.add_trace(go.Bar(x=[tail], y=["EW"], orientation='h', base=t, marker_color="#e74c3c", showlegend=False))
+                fig.update_layout(barmode='stack', title=f"Next Cycle Preview — C={C:.1f}s", xaxis_title='Time (s)', yaxis_title='Phase Group', height=300)
+                st.plotly_chart(fig, use_container_width=True)
+            except Exception:
+                pass
+
+        # Full run loop
+        if st.button("⏩ Run Full Simulation", type="secondary", key="btn_run_full_sim"):
+            # Probe durations (min duration defines horizon)
+            durations = {}
+            for appr in ["N","S","E","W"]:
+                f = sim_inputs.get(appr)
+                if not f:
+                    durations[appr] = 0.0
+                    continue
+                fb = f.getvalue() if hasattr(f, 'getvalue') else f.read()
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
+                    tmp.write(fb)
+                    p = tmp.name
+                cap = cv2.VideoCapture(p)
+                fps_ = cap.get(cv2.CAP_PROP_FPS) or 30.0
+                frames_ = cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0
+                cap.release()
+                try:
+                    os.unlink(p)
+                except Exception:
+                    pass
+                durations[appr] = float(frames_/max(fps_,1.0))
+            sim_horizon = max(0.0, min([d for d in durations.values() if d>0] + [0.0]))
+
+            # Warm-up first slice
+            logs = []
+            T = 0.0
+            pcu1 = {}
+            for appr in ["N","S","E","W"]:
+                pcu1[appr] = count_slice(sim_inputs[appr], T, min(T+float(warmup_s), sim_horizon), sl[appr]["line"], sl[appr]["invert"]) if sim_inputs.get(appr) else 0.0
+            dur1 = float(min(warmup_s, sim_horizon - T)) if sim_horizon > T else 0.0
+            rate1 = {k: (pcu1[k]/dur1 if dur1>0 else 0.0) for k in ["N","S","E","W"]}
+            plan1 = plan_from_pcu(rate1)
+            # Commit cycle 1
+            T_end = T + plan1['cycle']
+            pcu_cycle1 = {}
+            for appr in ["N","S","E","W"]:
+                pcu_cycle1[appr] = count_slice(sim_inputs[appr], T, min(T_end, sim_horizon), sl[appr]["line"], sl[appr]["invert"]) if sim_inputs.get(appr) else 0.0
+            logs.append({"t_start": T, "t_end": min(T_end, sim_horizon), "pcu": pcu_cycle1, "plan": plan1})
+            T = T_end
+
+            # Prepare placeholders for charts
+            os.makedirs('outputs', exist_ok=True)
+            ts_name = datetime.now().strftime('%Y%m%d_%H%M%S')
+            log_path = f'outputs/sim_{ts_name}.json'
+            import json
+            with open(log_path, 'w', encoding='utf-8') as f:
+                json.dump(logs, f, ensure_ascii=False, indent=2)
+            cycle_hist = [plan1['cycle']]
+            gns_hist = [plan1['g_NS']]
+            gew_hist = [plan1['g_EW']]
+            line_ph = st.empty()
+            bar_ph = st.empty()
+            next_ph = st.empty()
+
+            # Main loop
+            last_rates = [rate1]
+            while T < sim_horizon:
+                # Average of last two cycle rates (per-second)
+                if len(last_rates) >= 2:
+                    avg_rate = {k: (last_rates[-1][k] + last_rates[-2][k]) / 2.0 for k in ["N","S","E","W"]}
+                else:
+                    avg_rate = last_rates[-1]
+                plan_next = plan_from_pcu(avg_rate)
+
+                # Preview next plan
+                with next_ph.container():
+                    try:
+                        fig2 = go.Figure()
+                        Cn = plan_next['cycle']
+                        gNSn = plan_next['g_NS']; gEWn = plan_next['g_EW']
+                        t2 = 0.0
+                        if gNSn>0:
+                            fig2.add_trace(go.Bar(x=[gNSn], y=["NS"], orientation='h', base=t2, marker_color="#2ecc71", name='green'))
+                            t2 += gNSn
+                            fig2.add_trace(go.Bar(x=[YELLOW], y=["NS"], orientation='h', base=t2, marker_color="#f1c40f", name='amber'))
+                            t2 += YELLOW
+                        if gNSn>0 and gEWn>0:
+                            fig2.add_trace(go.Bar(x=[ALL_RED], y=["NS"], orientation='h', base=t2, marker_color="#e74c3c", name='red'))
+                            fig2.add_trace(go.Bar(x=[ALL_RED], y=["EW"], orientation='h', base=t2, marker_color="#e74c3c", showlegend=False))
+                            t2 += ALL_RED
+                        if gEWn>0:
+                            fig2.add_trace(go.Bar(x=[gEWn], y=["EW"], orientation='h', base=t2, marker_color="#2ecc71", showlegend=False))
+                            t2 += gEWn
+                            fig2.add_trace(go.Bar(x=[YELLOW], y=["EW"], orientation='h', base=t2, marker_color="#f1c40f", showlegend=False))
+                            t2 += YELLOW
+                        if t2 < Cn:
+                            tail2 = Cn - t2
+                            fig2.add_trace(go.Bar(x=[tail2], y=["NS"], orientation='h', base=t2, marker_color="#e74c3c", showlegend=False))
+                            fig2.add_trace(go.Bar(x=[tail2], y=["EW"], orientation='h', base=t2, marker_color="#e74c3c", showlegend=False))
+                        fig2.update_layout(barmode='stack', title=f"Next Cycle Preview — C={Cn:.1f}s", xaxis_title='Time (s)', yaxis_title='Phase Group', height=300)
+                        st.plotly_chart(fig2, use_container_width=True)
+                    except Exception:
+                        pass
+
+                # Execute this plan cycle
+                T_end2 = T + plan_next['cycle']
+                pcu_cycle = {}
+                for appr in ["N","S","E","W"]:
+                    pcu_cycle[appr] = count_slice(sim_inputs[appr], T, min(T_end2, sim_horizon), sl[appr]["line"], sl[appr]["invert"]) if sim_inputs.get(appr) else 0.0
+                dur_k = float(max(0.0, min(T_end2, sim_horizon) - T))
+                rate_k = {k: (pcu_cycle[k]/dur_k if dur_k>0 else 0.0) for k in ["N","S","E","W"]}
+                last_rates.append(rate_k)
+                logs.append({"t_start": T, "t_end": min(T_end2, sim_horizon), "pcu": pcu_cycle, "plan": plan_next})
+                T = T_end2
+
+                # Persist logs and update charts
+                with open(log_path, 'w', encoding='utf-8') as f:
+                    json.dump(logs, f, ensure_ascii=False, indent=2)
+                cycle_hist.append(plan_next['cycle'])
+                gns_hist.append(plan_next['g_NS'])
+                gew_hist.append(plan_next['g_EW'])
+                # Charts
+                with line_ph.container():
+                    try:
+                        figL = go.Figure()
+                        figL.add_trace(go.Scatter(y=cycle_hist, x=list(range(1, len(cycle_hist)+1)), mode='lines+markers', name='Cycle'))
+                        figL.update_layout(title='Cycle Length per Cycle', xaxis_title='Cycle #', yaxis_title='Seconds', height=280)
+                        st.plotly_chart(figL, use_container_width=True)
+                    except Exception:
+                        pass
+                with bar_ph.container():
+                    try:
+                        figB = go.Figure()
+                        figB.add_trace(go.Bar(y=gns_hist, x=list(range(1, len(gns_hist)+1)), name='g_NS'))
+                        figB.add_trace(go.Bar(y=gew_hist, x=list(range(1, len(gew_hist)+1)), name='g_EW'))
+                        figB.update_layout(barmode='stack', title='NS/EW Greens per Cycle', xaxis_title='Cycle #', yaxis_title='Seconds', height=280)
+                        st.plotly_chart(figB, use_container_width=True)
+                    except Exception:
+                        pass
+
+            st.success(f"Simulation complete. Log saved to {log_path}")
     # Batch processing for four approaches (simplified)
     with st.expander("📦 Batch: Process four approach videos (NB/SB/EB/WB)"):
         st.markdown("Upload up to four videos below. We'll process them one by one and save per-approach CSVs plus a combined summary map for your notebook.")
