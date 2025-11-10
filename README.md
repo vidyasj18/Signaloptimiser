@@ -66,6 +66,10 @@ Why not only Webster? Pure Webster expects clean inputs and exact phase rules; r
 - Per‑approach CSVs: `outputs/<APPROACH>_summary.csv` (counts, PCU by type, totals).
 - Combined JSON/CSV: `outputs/intersection_summary.json` and `outputs/intersection_summary.csv` (approach totals).
 - Timings and diagram: running `python final.py` prints per‑approach Green/Amber/Red and renders a horizontal exclusive phase timeline (NS vs EW) with all‑red.
+- Signal plans: `outputs/ml_signal_plan.json` (ML-based) and `outputs/webster_signal_plan.json` (Webster-based).
+- Comparison results: `outputs/signalplan_comparision.json` (performance metrics comparison).
+- SUMO simulation: `outputs/sumo_comparison.json` (microsimulation validation results).
+- Visualizations: `outputs/visualizations/` (all PNG charts and synthetic dataset CSV for report).
 
 ### Example: YOLO/app JSON (outputs/intersection_summary.json)
 ```json
@@ -107,6 +111,19 @@ streamlit run main.py
 
 # 2) Compute timings and show diagram
 python final.py
+
+# 3) Compare with Webster method
+python webster.py
+python compare_signal_plans.py
+
+# 4) Run SUMO simulation
+python sumo_simulation.py
+
+# 5) Generate all visualizations for report (PNG images + CSV dataset)
+# NEW: This script now runs steps 2-5 automatically! Just run:
+python generate_visualizations.py
+# It will execute final.py, webster.py, compare_signal_plans.py, sumo_simulation.py,
+# and generate all visualizations in one go.
 ```
 
 ## Parameters (defaults)
