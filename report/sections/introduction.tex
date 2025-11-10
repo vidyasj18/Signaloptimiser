@@ -6,7 +6,7 @@
 
 Urban traffic congestion poses a critical challenge in rapidly growing Indian cities like Mangalore, where mixed traffic conditions and ever-increasing vehicle ownership rates strain existing road infrastructure. Intersections serve as major potential bottlenecks, and inefficiencies in their operation often lead to increased travel delays, higher fuel consumption, elevated emission levels, and reduced safety for all road users. Conventional traffic signal plans, whether outdated or based on intuition rather than data, fail to cope with dynamically fluctuating demand patterns, resulting in unpredictable traffic flow and commuter frustration.
 
-This project addresses these concerns by introducing a systematic, data-driven methodology for optimizing signal timings at key urban intersections. By employing a combination of automated field data collection using YOLOv8 computer vision for vehicle detection and counting, standard engineering practices (Webster's method), and machine learning models (Linear Regression, Random Forest), the study generates precise signal plans tailored to real-world traffic conditions. The significance of this project lies not only in its immediate improvements—such as reduced vehicle delays and better intersection throughput—but also in its demonstration of how modern tools and best practices can be effectively adapted for Indian urban environments. The project offers a replicable and scalable model for other cities aiming to move from reactive to proactive, evidence-based traffic signal management, ultimately supporting safer, more efficient, and sustainable urban mobility.
+This project addresses these concerns by introducing a systematic, data-driven methodology for optimizing signal timings at key urban intersections. By employing a combination of automated field data collection using YOLOv8 computer vision for vehicle detection and counting, standard engineering practices (Webster's method), and SUMO microsimulation for validation, the study generates precise signal plans tailored to real-world traffic conditions. The significance of this project lies not only in its immediate improvements—such as reduced vehicle delays and better intersection throughput—but also in its demonstration of how modern tools and best practices can be effectively adapted for Indian urban environments. The project offers a replicable and scalable model through a user-friendly Streamlit web application, enabling accessible traffic signal optimization for other cities aiming to move from reactive to proactive, evidence-based traffic signal management, ultimately supporting safer, more efficient, and sustainable urban mobility.
 
 \section{Problem Statement}
 \label{sec:problem}
@@ -23,10 +23,9 @@ As a consequence, road users regularly experience poor intersection throughput, 
     \item Comprehensive field data collection using video recording and automated YOLOv8-based vehicle detection and counting to capture accurate traffic volumes and movement patterns, converting detected vehicles into Passenger Car Units (PCUs)
     \item Documentation of site conditions, traffic distribution, and congestion patterns during peak and off-peak hours
     \item Application of standard traffic engineering formulas (Webster's method) to calculate optimal signal cycle lengths and green time allocations
-    \item Development and use of machine learning models (Linear Regression, Random Forest) trained on synthetic datasets with real-world traffic patterns to predict cycle times and validate results against conventional methods
-    \item Creation of realistic training datasets incorporating time-of-day effects, weather impacts, special events, and day-of-week patterns to enhance model robustness
+    \item Development of a Streamlit web application that integrates YOLO vehicle detection, Webster signal timing calculation, and SUMO simulation in a unified, user-friendly interface
     \item Quantitative evaluation of intersection performance metrics including average vehicle delay and queue length
-    \item Validation of optimized signal timings using SUMO microsimulation to compare ML-based and Webster-based approaches under identical traffic conditions
+    \item Validation of optimized signal timings using SUMO microsimulation to evaluate performance metrics under realistic traffic conditions
     \item Creation of detailed signal phasing diagrams and visualization charts to clearly present recommended timing strategies for each intersection
     \item Systematic reporting of workflow, challenges encountered during fieldwork, and adaptive solutions implemented to ensure data integrity
     \item Formulation of evidence-based recommendations for future signal upgrades and operational improvements at the studied locations
@@ -47,12 +46,12 @@ Several limitations constrain the outcomes of this project. The study is restric
 \label{sec:methodology_approach}
 
 \begin{enumerate}
-    \item Selected two representative intersections in Mangalore: one signalized (Jyoti Circle), one manually controlled (KMC Hospital junction)
+    \item Selected two representative intersections in Mangalore: one signalized (Jyoti Circle), one manually controlled (Hampankatta junction)
     \item Conducted comprehensive field data collection using Insta360 camera video recordings during peak and off-peak periods
     \item Developed and deployed YOLOv8-based automated vehicle detection system to process videos, identify vehicle classes, and calculate Passenger Car Units (PCUs) for each approach
     \item Tabulated traffic volumes and movement patterns for all approaches to each intersection
     \item Applied Webster's method (as per IRC:106-1990) to calculate optimum signal cycle length and allocate green times based on observed demand
-    \item Developed and used machine learning models (Linear Regression, Random Forest in Python) to predict cycle times and validate standard engineering outputs
+    \item Developed a Streamlit web application that provides an integrated workflow for vehicle detection, signal timing optimization, and simulation validation
     \item Created optimized signal phasing diagrams and visualized results for recommended timing strategies
     \item Documented practical fieldwork challenges and employed adaptive solutions to ensure accurate data collection and analysis
     \item Ensured all design and calculation steps adhered to specifications outlined in IRC codes for signalized intersection design and operation

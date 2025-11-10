@@ -55,25 +55,18 @@ Each intersection was recorded for 30 minutes, and the videos were processed for
 \section{Development of Analytical Framework in Python}
 \label{sec:python_framework}
 
-\subsection{Jupyter Notebook Setup}
+\subsection{Streamlit Web Application Development}
 
-A Jupyter Notebook was developed to compute traffic signal timings using classical traffic engineering methods and machine-learning models. The notebook performs:
+A comprehensive Streamlit web application was developed to provide an integrated workflow for traffic signal optimization. The application performs:
 \begin{itemize}
+    \item Vehicle detection and PCU calculation using YOLOv8
     \item Optimum cycle time calculation using Webster's Method
     \item Green split allocation for each approach
-    \item Average vehicle delay estimation through Webster's delay formula
-    \item Prediction of cycle time and green splits using Linear Regression and Random Forest models
+    \item Phase diagram visualization
+    \item SUMO simulation execution and metrics extraction
 \end{itemize}
 
-All code was uploaded to a GitHub repository for version control and transparency.
-
-\subsection{Model Training}
-
-\begin{itemize}
-    \item Synthetic datasets representing varied traffic volumes were prepared.
-    \item Models were trained for predicting cycle length as well as lane-wise green timings.
-    \item Initial out-of-distribution issues (low training range vs high real PCU) were later corrected by expanding the dataset range to 100--4000 PCU.
-\end{itemize}
+The application provides a user-friendly interface that eliminates the need for command-line operations, making traffic signal optimization accessible to engineers and planners without extensive programming knowledge.
 
 \section{YOLO-Based Vehicle Detection and PCU Estimation}
 \label{sec:yolo_detection}
@@ -94,14 +87,16 @@ This forms the core input for signal timing calculations.
 
 \subsection{Stage 2: Signal Timing and Phase Diagram Generator}
 
-A separate script (\texttt{final.py}) reads the JSON output and computes:
+The Streamlit application integrates Webster signal timing calculation directly into the workflow:
 \begin{itemize}
-    \item Optimum cycle time
-    \item Effective green, amber, and red times for NS and EW phases
-    \item A complete phase diagram using Plotly to visualize the signal sequence
+    \item Reads PCU data from the JSON output
+    \item Computes optimum cycle time using Webster's method
+    \item Calculates effective green, amber, and red times for NS and EW phases
+    \item Generates a complete phase diagram using Plotly to visualize the signal sequence
+    \item Validates proportional green allocation based on actual demand
 \end{itemize}
 
-The model also validates proportional green allocation based on actual demand.
+The phase diagram clearly shows the sequence and duration of green, amber, and red phases for each approach, ensuring that NS and EW phases never overlap (only one phase group is green at a time).
 
 \section{Case Study Analysis for Selected Intersections}
 \label{sec:case_study}
@@ -137,33 +132,33 @@ Both cases validated the model's ability to adapt to demand and intersection con
 \section{Validation and Interpretation}
 \label{sec:validation}
 
-Signal timing predictions were cross-verified against:
+Signal timing calculations were cross-verified against:
 \begin{itemize}
-    \item Webster's analytical cycle time
+    \item Webster's analytical cycle time formula
     \item Phase-wise saturation flow considerations
     \item PCU-based proportional green time distribution
+    \item IRC:106-1990 standards for signalized intersections
 \end{itemize}
 
-The ML model outputs aligned with classical traffic engineering expectations, confirming the reliability of the developed pipeline.
-
-Additionally, both ML-based and Webster-based signal plans were validated through SUMO (Simulation of Urban MObility) microsimulation. The SUMO validation process involved:
+The Webster-based signal plans were validated through SUMO (Simulation of Urban MObility) microsimulation. The SUMO validation process involved:
 \begin{itemize}
     \item Dynamic network generation for 3-way and 4-way intersections based on detected approaches
-    \item Traffic light program creation from signal timing plans
+    \item Traffic light program creation from Webster signal timing plans
     \item Route generation based on PCU values from field data
-    \item Running identical simulations for both methods under the same traffic conditions
-    \item Extracting performance metrics including average delay, waiting time, travel time, and throughput
+    \item Running simulations under realistic traffic conditions
+    \item Extracting performance metrics including average delay, waiting time, travel time, throughput, and time loss
 \end{itemize}
 
-SUMO simulation results demonstrated that the ML-based approach outperformed Webster's method, achieving:
+SUMO simulation results provide detailed performance metrics that validate the effectiveness of the Webster-based signal timing optimization:
 \begin{itemize}
-    \item Average delay reduction of 1.3\% (8.84s vs 8.96s)
-    \item Improved average travel time (52.25s vs 52.32s)
-    \item Reduced time loss (14.45s vs 14.55s)
-    \item Superior performance in 4 out of 5 key metrics
+    \item Average vehicle delay per vehicle
+    \item Average waiting time at intersections
+    \item Average travel time through the intersection
+    \item Vehicle throughput (vehicles per hour)
+    \item Total time loss compared to free-flow conditions
 \end{itemize}
 
-This microsimulation validation provides concrete evidence that the ML-enhanced signal optimization framework produces measurable improvements over traditional methods in realistic traffic scenarios.
+This microsimulation validation provides concrete evidence that the Webster-based signal optimization framework produces effective signal timing plans validated in realistic traffic scenarios.
 
 \newpage
 
