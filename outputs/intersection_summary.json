@@ -1,46 +1,42 @@
 {
   "NB": {
-    "vehicle_counts": {
-      "car": 2050,
-      "truck": 120,
-      "bus": 45,
-      "motorcycle": 400,
-      "bicycle": 120
-    },
     "total_pcu": 2880.0,
-    "duration": 600.0
+    "vehicle_counts": {
+      "car": 2500,
+      "truck": 100,
+      "bus": 20,
+      "motorcycle": 200
+    },
+    "duration": 3600.0
   },
   "SB": {
-    "vehicle_counts": {
-      "car": 1980,
-      "truck": 110,
-      "bus": 40,
-      "motorcycle": 360,
-      "bicycle": 100
-    },
     "total_pcu": 2760.0,
-    "duration": 600.0
+    "vehicle_counts": {
+      "car": 2400,
+      "truck": 80,
+      "bus": 15,
+      "motorcycle": 180
+    },
+    "duration": 3600.0
   },
   "EB": {
-    "vehicle_counts": {
-      "car": 1180,
-      "truck": 90,
-      "bus": 30,
-      "motorcycle": 220,
-      "bicycle": 40
-    },
     "total_pcu": 1560.0,
-    "duration": 600.0
+    "vehicle_counts": {
+      "car": 1400,
+      "truck": 40,
+      "bus": 10,
+      "motorcycle": 100
+    },
+    "duration": 3600.0
   },
   "WB": {
-    "vehicle_counts": {
-      "car": 2200,
-      "truck": 150,
-      "bus": 50,
-      "motorcycle": 420,
-      "bicycle": 110
-    },
     "total_pcu": 3480.0,
-    "duration": 600.0
+    "vehicle_counts": {
+      "car": 3000,
+      "truck": 120,
+      "bus": 25,
+      "motorcycle": 250
+    },
+    "duration": 3600.0
   }
 }

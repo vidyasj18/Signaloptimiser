@@ -5,12 +5,29 @@ import numpy as np
 from ultralytics import YOLO
 import tempfile
 import os
+import json
 from datetime import datetime
 import plotly.express as px
 import plotly.graph_objects as go
 from collections import defaultdict
 from typing import Optional, Tuple, Dict
 import io
+import sumo_simulation
+import webster
+
+
+def make_json_serializable(obj):
+    """Convert numpy types to native Python types for JSON serialization"""
+    if isinstance(obj, (np.integer, np.int64, np.int32, np.int16, np.int8)):
+        return int(obj)
+    elif isinstance(obj, (np.floating, np.float64, np.float32, np.float16)):
+        return float(obj)
+    elif isinstance(obj, dict):
+        return {k: make_json_serializable(v) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple)):
+        return [make_json_serializable(item) for item in obj]
+    return obj
+
 
 # PCU factors based on IRC 106-1990
 PCU_FACTORS = {
@@ -936,292 +953,304 @@ def main():
     # 🧠 Adaptive Simulator (beta)
     # ===========================
     with st.expander("🧠 Adaptive Simulator (beta)", expanded=False):
-        st.markdown("Simulate cycle-by-cycle plans. Warm-up 20s; stride defaults to 3.")
-        # Videos per approach
+        st.markdown("Process full-interval videos → compute PCUs → derive Webster plan → run SUMO.")
+
+        if 'adaptive_state' not in st.session_state:
+            st.session_state.adaptive_state = {
+                "pcu": None,
+                "pcu_totals": None,
+                "plan": None,
+                "sumo": None,
+            }
+        adaptive_state = st.session_state.adaptive_state
+
         sim_inputs = {}
         cols = st.columns(4)
-        for i, appr in enumerate(["N", "S", "E", "W"]):
+        for i, appr in enumerate(["NB", "SB", "EB", "WB"]):
             with cols[i]:
-                sim_inputs[appr] = st.file_uploader(f"{appr} video", type=["mp4","avi","mov","mkv"], key=f"sim_vid_{appr}")
-        warmup_s = st.number_input("Warm-up seconds", min_value=5, max_value=60, value=20)
-        frame_stride_sim = st.slider("Frame stride", 1, 5, 3)
-        brain = st.selectbox("Brain", ["ML (default)", "Webster"], index=0)
-        light_mode = st.checkbox("Light mode (MVP): micro-sampling, no charts", value=False)
-        # One stopline per video
-        st.markdown("Define stoplines per approach (ignored if no video).")
-        sl = {}
-        for appr in ["N","S","E","W"]:
+                sim_inputs[appr] = st.file_uploader(
+                    f"{appr} video",
+                    type=["mp4", "avi", "mov", "mkv"],
+                    key=f"sim_vid_{appr}"
+                )
+
+        use_stoplines = st.checkbox("Use stopline crossing for PCU counting", value=True, key="adaptive_use_stoplines")
+        st.markdown("Define stoplines per approach (ignored if disabled or no video).")
+        stoplines: Dict[str, Dict[str, Tuple[Tuple[int, int], Tuple[int, int]]]] = {}
+        for appr in ["NB", "SB", "EB", "WB"]:
             with st.expander(f"Stopline for {appr}"):
                 c1, c2, c3, c4 = st.columns(4)
-                ax_ = c1.number_input(f"{appr} Ax", min_value=0, value=0, key=f"{appr}_ax")
-                ay_ = c2.number_input(f"{appr} Ay", min_value=0, value=480, key=f"{appr}_ay")
-                bx_ = c3.number_input(f"{appr} Bx", min_value=0, value=1919, key=f"{appr}_bx")
-                by_ = c4.number_input(f"{appr} By", min_value=0, value=480, key=f"{appr}_by")
-                inv_ = st.checkbox(f"Invert {appr}", value=False, key=f"{appr}_inv")
-                sl[appr] = {"line": ((int(ax_), int(ay_)), (int(bx_), int(by_))), "invert": inv_}
+                ax_val = c1.number_input(f"{appr} Ax", min_value=0, value=0, key=f"{appr}_ax")
+                ay_val = c2.number_input(f"{appr} Ay", min_value=0, value=480, key=f"{appr}_ay")
+                bx_val = c3.number_input(f"{appr} Bx", min_value=0, value=1919, key=f"{appr}_bx")
+                by_val = c4.number_input(f"{appr} By", min_value=0, value=480, key=f"{appr}_by")
+                invert_val = st.checkbox(f"Invert {appr}", value=False, key=f"{appr}_invert")
+                stoplines[appr] = {
+                    "line": ((int(ax_val), int(ay_val)), (int(bx_val), int(by_val))),
+                    "invert": invert_val,
+                }
 
-        # Helper: count PCU in [start_s, end_s] for one video
-        def count_slice(file_obj, start_s, end_s, line, invert):
-            if file_obj is None:
-                return 0.0
-            fb = file_obj.getvalue() if hasattr(file_obj, 'getvalue') else file_obj.read()
-            # Probe fps
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
-                tmp.write(fb)
-                p = tmp.name
-            cap = cv2.VideoCapture(p)
-            fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
-            cap.release()
-            try:
-                os.unlink(p)
-            except Exception:
-                pass
-            start_f = int(float(start_s) * fps)
-            end_f = int(float(end_s) * fps)
-            # Local defaults to avoid dependency on other UI controls
-            min_frames_sim = 5
-            min_distance_sim = 100
-            max_disappeared_sim = 30
-            res = process_video(
-                io.BytesIO(fb), model, False, min_frames_sim, min_distance_sim, max_disappeared_sim,
-                approach_name=None,
-                stopline=line,
-                mask_path=None,
-                invert_stopline=invert,
-                start_frame=start_f,
-                end_frame=end_f,
-                crossing_tolerance=5,
-                min_normal_motion=4,
-                frame_stride=frame_stride_sim,
-            )
-            return res['total_pcu'] if res else 0.0
+        frame_range = st.slider(
+            "Frame range to analyse (apply to all videos; set end to 0 for full length)",
+            min_value=0,
+            max_value=2000,
+            value=(0, 0),
+            step=1,
+        )
+
+        st.markdown("---")
+        col_test, col_calc = st.columns(2)
         
-        DEFAULT_LANES = 2
-        DEFAULT_LOST_TIME = 12.0
-        SAT_PER_LANE = 1800
-        YELLOW = 3.0
-        ALL_RED = 2.0
+        with col_test:
+            if st.button("🧪 Load Test Data (Skip YOLO)", type="secondary", key="btn_load_test_data"):
+                # Hardcoded test data matching intersection_summary.json structure
+                test_summary = {
+                    "NB": {
+                        "total_pcu": 2880.0,
+                        "vehicle_counts": {"car": 2500, "truck": 100, "bus": 20, "motorcycle": 200},
+                        "duration": 3600.0
+                    },
+                    "SB": {
+                        "total_pcu": 2760.0,
+                        "vehicle_counts": {"car": 2400, "truck": 80, "bus": 15, "motorcycle": 180},
+                        "duration": 3600.0
+                    },
+                    "EB": {
+                        "total_pcu": 1560.0,
+                        "vehicle_counts": {"car": 1400, "truck": 40, "bus": 10, "motorcycle": 100},
+                        "duration": 3600.0
+                    },
+                    "WB": {
+                        "total_pcu": 3480.0,
+                        "vehicle_counts": {"car": 3000, "truck": 120, "bus": 25, "motorcycle": 250},
+                        "duration": 3600.0
+                    }
+                }
+                
+                test_totals = {appr: float(data["total_pcu"]) for appr, data in test_summary.items()}
+                
+                adaptive_state["pcu"] = test_summary
+                adaptive_state["pcu_totals"] = test_totals
+                adaptive_state["plan"] = None
+                adaptive_state["sumo"] = None
+                st.session_state.adaptive_state = adaptive_state
+                
+                # Save to file
+                os.makedirs('outputs', exist_ok=True)
+                with open('outputs/intersection_summary.json', 'w', encoding='utf-8') as f:
+                    json.dump(test_summary, f, ensure_ascii=False, indent=2)
+                
+                st.success("✅ Test data loaded! PCU values: " + str({appr: round(val, 2) for appr, val in test_totals.items()}))
+                st.info("You can now proceed to 'Generate Webster Plan' and 'Run SUMO Simulation' buttons.")
+        
+        with col_calc:
+            if st.button("📊 Calculate PCUs (full video)", type="primary", key="btn_calc_pcu"):
+                totals = {}
+                summary = {}
+                any_processed = False
 
+                for appr, file_obj in sim_inputs.items():
+                    if file_obj is None:
+                        continue
+                    any_processed = True
+                    file_bytes = file_obj.getvalue() if hasattr(file_obj, 'getvalue') else file_obj.read()
+                    video_like = io.BytesIO(file_bytes)
+                    st.info(f"Processing {appr} video...")
+                    with st.spinner(f"Calculating PCU for {appr}"):
+                        res = process_video(
+                            video_like,
+                            model,
+                            create_annotated_video=False,
+                            min_frames=5,
+                            min_distance=100,
+                            max_disappeared=30,
+                            approach_name=appr,
+                            stopline=stoplines[appr]["line"] if use_stoplines else None,
+                            mask_path=None,
+                            invert_stopline=stoplines[appr]["invert"] if use_stoplines else False,
+                            start_frame=frame_range[0],
+                            end_frame=frame_range[1],
+                            crossing_tolerance=5,
+                            min_normal_motion=4,
+                            frame_stride=1,
+                        )
+                    if res:
+                        totals[appr] = float(res['total_pcu'])
+                        summary[appr] = {
+                            "total_pcu": float(res['total_pcu']),
+                            "vehicle_counts": make_json_serializable(res['vehicle_counts']),
+                            "duration": float(res['duration']),
+                        }
+                    else:
+                        totals[appr] = 0.0
 
+                if not any_processed:
+                    st.warning("Upload at least one approach video to compute PCUs.")
+                else:
+                    adaptive_state["pcu"] = summary
+                    adaptive_state["pcu_totals"] = totals
+                    adaptive_state["plan"] = None
+                    adaptive_state["sumo"] = None
+                    st.session_state.adaptive_state = adaptive_state
 
-        # Brain: Webster fallback (ML wrapper can plug in later)
-        def plan_from_pcu(pcu_dict):
-            N, S, E, W = [pcu_dict.get(x, 0.0) for x in ['N','S','E','W']]
-            NS, EW = N+S, E+W
-            num_present = sum(1 for v in [N,S,E,W] if v > 0)
-            capacity = max(1, num_present) * DEFAULT_LANES * SAT_PER_LANE
-            Y = min((NS+EW)/capacity if capacity>0 else 0.0, 0.95)
-            C = (1.5*DEFAULT_LOST_TIME + 5)/(1-Y) if Y < 0.95 else 180.0
-            C = float(np.clip(C, 60.0, 180.0))
-            eff = max(0.0, C-DEFAULT_LOST_TIME)
-            g_NS = eff * (NS/(NS+EW)) if (NS+EW) > 0 else 0.0
-            g_EW = eff - g_NS
-            split = {}
-            split['NB'] = g_NS * (N/NS) if NS>0 and N>0 else 0.0
-            split['SB'] = g_NS * (S/NS) if NS>0 and S>0 else 0.0
-            split['EB'] = g_EW * (E/EW) if EW>0 and E>0 else 0.0
-            split['WB'] = g_EW * (W/EW) if EW>0 and W>0 else 0.0
-            return {"cycle": C, "g_NS": g_NS, "g_EW": g_EW, **split}
+                    if summary:
+                        os.makedirs('outputs', exist_ok=True)
+                        with open('outputs/intersection_summary.json', 'w', encoding='utf-8') as f:
+                            json.dump(summary, f, ensure_ascii=False, indent=2)
+                        st.success("PCU calculation complete. Saved outputs/intersection_summary.json.")
+                        st.write({appr: round(val, 2) for appr, val in totals.items()})
+                    else:
+                        st.warning("No vehicles detected in supplied videos.")
 
-        if st.button("▶️ Start Simulation", type="primary", key="btn_start_sim"):
-            with st.spinner("Running warm-up slice..."):
-                pcu = {}
-                for appr in ["N","S","E","W"]:
-                    pcu[appr] = count_slice(sim_inputs[appr], 0.0, float(warmup_s), sl[appr]["line"], sl[appr]["invert"]) if sim_inputs.get(appr) else 0.0
-                # Convert to per-second rate
-                rate = {k: (v/float(warmup_s)) for k,v in pcu.items()}
-                # Use rate directly as planning load (Webster scales internally)
-                plan = plan_from_pcu(rate)
-            st.success("Warm-up complete. Showing next cycle plan (preview):")
-            # Show warm-up PCU totals and per-second rates
-            st.markdown("**Warm-up PCU (totals)**: " + str({k: round(v,2) for k,v in pcu.items()}))
-            st.markdown("**Warm-up PCU rate (per sec)**: " + str({k: round(v,3) for k,v in rate.items()}))
-            st.write({k: (round(v,2) if isinstance(v,float) else v) for k,v in plan.items()})
-            # Preview phase diagram
-            try:
-                fig = go.Figure()
-                C = plan['cycle']
-                gNS = plan['g_NS']; gEW = plan['g_EW']
-                t = 0.0
-                if gNS>0:
-                    fig.add_trace(go.Bar(x=[gNS], y=["NS"], orientation='h', base=t, marker_color="#2ecc71", name='green'))
-                    t += gNS
-                    fig.add_trace(go.Bar(x=[YELLOW], y=["NS"], orientation='h', base=t, marker_color="#f1c40f", name='amber'))
-                    t += YELLOW
-                if gNS>0 and gEW>0:
-                    fig.add_trace(go.Bar(x=[ALL_RED], y=["NS"], orientation='h', base=t, marker_color="#e74c3c", name='red'))
-                    fig.add_trace(go.Bar(x=[ALL_RED], y=["EW"], orientation='h', base=t, marker_color="#e74c3c", showlegend=False))
-                    t += ALL_RED
-                if gEW>0:
-                    fig.add_trace(go.Bar(x=[gEW], y=["EW"], orientation='h', base=t, marker_color="#2ecc71", showlegend=False))
-                    t += gEW
-                    fig.add_trace(go.Bar(x=[YELLOW], y=["EW"], orientation='h', base=t, marker_color="#f1c40f", showlegend=False))
-                    t += YELLOW
-                if t < C:
-                    tail = C - t
-                    fig.add_trace(go.Bar(x=[tail], y=["NS"], orientation='h', base=t, marker_color="#e74c3c", showlegend=False))
-                    fig.add_trace(go.Bar(x=[tail], y=["EW"], orientation='h', base=t, marker_color="#e74c3c", showlegend=False))
-                fig.update_layout(barmode='stack', title=f"Next Cycle Preview — C={C:.1f}s", xaxis_title='Time (s)', yaxis_title='Phase Group', height=300)
-                st.plotly_chart(fig, use_container_width=True)
-            except Exception:
-                pass
+        if adaptive_state["pcu_totals"]:
+            if st.button("🕒 Generate Webster Plan", type="primary", key="btn_webster_plan"):
+                with st.spinner("Computing Webster plan..."):
+                    plan = webster.compute_webster_plan(pcu_override=adaptive_state["pcu_totals"])
+                adaptive_state["plan"] = plan
+                adaptive_state["sumo"] = None
+                st.session_state.adaptive_state = adaptive_state
+                st.success(f"✅ Webster plan generated! Cycle length: {plan['cycle_length']:.2f} s. See summary below.")
 
-        # Full run loop
-        if st.button("⏩ Run Full Simulation", type="secondary", key="btn_run_full_sim"):
-            # Probe durations (min duration defines horizon)
-            durations = {}
-            for appr in ["N","S","E","W"]:
-                f = sim_inputs.get(appr)
-                if not f:
-                    durations[appr] = 0.0
-                    continue
-                fb = f.getvalue() if hasattr(f, 'getvalue') else f.read()
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp:
-                    tmp.write(fb)
-                    p = tmp.name
-                cap = cv2.VideoCapture(p)
-                fps_ = cap.get(cv2.CAP_PROP_FPS) or 30.0
-                frames_ = cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0
-                cap.release()
+        if adaptive_state["plan"]:
+            if st.button("🚦 Run SUMO Simulation", type="primary", key="btn_run_sumo"):
+                with st.spinner("Running SUMO simulation (Webster plan)..."):
+                    sumo_results = sumo_simulation.run_webster_pipeline(
+                        pcu_override=adaptive_state["pcu_totals"],
+                        run_sumo=True,
+                        use_gui=False,
+                    )
+                adaptive_state["sumo"] = sumo_results
+                st.session_state.adaptive_state = adaptive_state
+                if not sumo_results["sumo_available"]:
+                    st.warning("SUMO libraries not available; generated network/config files for manual execution.")
+                elif not sumo_results["sumo_success"]:
+                    st.error("SUMO simulation failed. Check console logs for details.")
+                else:
+                    st.success("SUMO simulation complete.")
+        
+        # Consolidated Summary Section - Show all results in one place
+        if adaptive_state.get("pcu_totals") or adaptive_state.get("plan") or adaptive_state.get("sumo"):
+            st.markdown("---")
+            st.markdown("## 📋 Complete Analysis Summary")
+            
+            # Input PCUs Section
+            if adaptive_state.get("pcu_totals"):
+                st.markdown("### 📊 Input PCUs")
+                pcu_totals = adaptive_state["pcu_totals"]
+                pcu_cols = st.columns(4)
+                for idx, (appr, pcu_val) in enumerate(pcu_totals.items()):
+                    with pcu_cols[idx % 4]:
+                        st.metric(f"{appr} PCU", f"{pcu_val:.2f}")
+                
+                # Show detailed PCU breakdown if available
+                if adaptive_state.get("pcu"):
+                    with st.expander("📋 Detailed PCU Breakdown"):
+                        pcu_data = adaptive_state["pcu"]
+                        pcu_rows = []
+                        for appr, data in pcu_data.items():
+                            pcu_rows.append({
+                                "Approach": appr,
+                                "Total PCU": f"{data.get('total_pcu', 0.0):.2f}",
+                                "Duration (s)": f"{data.get('duration', 0.0):.2f}",
+                                "Vehicle Counts": str(data.get('vehicle_counts', {}))
+                            })
+                        if pcu_rows:
+                            st.dataframe(pd.DataFrame(pcu_rows), use_container_width=True, hide_index=True)
+            
+            # Webster Plan Section
+            if adaptive_state.get("plan"):
+                st.markdown("### 🕒 Webster Signal Plan")
+                plan = adaptive_state["plan"]
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.metric("Cycle Length", f"{plan.get('cycle_length', 0.0):.2f} s")
+                with col2:
+                    if plan.get("_diagnostics"):
+                        eff_green = plan["_diagnostics"].get("effective_green_total", 0.0)
+                        st.metric("Effective Green", f"{eff_green:.2f} s")
+                
+                # Phase timings table
+                if plan.get("approaches"):
+                    st.markdown("**Per-Approach Timings:**")
+                    timing_rows = []
+                    for appr, data in plan["approaches"].items():
+                        timing_rows.append({
+                            "Approach": appr,
+                            "Green (s)": f"{data.get('green', 0.0):.2f}",
+                            "Amber (s)": f"{data.get('amber', 0.0):.2f}",
+                            "Red (s)": f"{data.get('red', 0.0):.2f}",
+                            "Arrival Flow (PCU/hr)": f"{data.get('arrival_flow_rate', 0.0):.2f}"
+                        })
+                    if timing_rows:
+                        st.dataframe(pd.DataFrame(timing_rows), use_container_width=True, hide_index=True)
+                
+                # Phase diagram
                 try:
-                    os.unlink(p)
-                except Exception:
-                    pass
-                durations[appr] = float(frames_/max(fps_,1.0))
-            sim_horizon = max(0.0, min([d for d in durations.values() if d>0] + [0.0]))
-
-            # Warm-up first slice
-            logs = []
-            T = 0.0
-            pcu1 = {}
-            for appr in ["N","S","E","W"]:
-                pcu1[appr] = count_slice(sim_inputs[appr], T, min(T+float(warmup_s), sim_horizon), sl[appr]["line"], sl[appr]["invert"]) if sim_inputs.get(appr) else 0.0
-            dur1 = float(min(warmup_s, sim_horizon - T)) if sim_horizon > T else 0.0
-            rate1 = {k: (pcu1[k]/dur1 if dur1>0 else 0.0) for k in ["N","S","E","W"]}
-            plan1 = plan_from_pcu(rate1)
-            # Commit cycle 1
-            T_end = T + plan1['cycle']
-            pcu_cycle1 = {}
-            for appr in ["N","S","E","W"]:
-                pcu_cycle1[appr] = count_slice(sim_inputs[appr], T, min(T_end, sim_horizon), sl[appr]["line"], sl[appr]["invert"]) if sim_inputs.get(appr) else 0.0
-            logs.append({"t_start": T, "t_end": min(T_end, sim_horizon), "pcu": pcu_cycle1, "plan": plan1})
-            T = T_end
-
-            # Prepare placeholders for charts
-            os.makedirs('outputs', exist_ok=True)
-            ts_name = datetime.now().strftime('%Y%m%d_%H%M%S')
-            log_path = f'outputs/sim_{ts_name}.json'
-            import json
-            with open(log_path, 'w', encoding='utf-8') as f:
-                json.dump(logs, f, ensure_ascii=False, indent=2)
-            cycle_hist = [plan1['cycle']]
-            gns_hist = [plan1['g_NS']]
-            gew_hist = [plan1['g_EW']]
-            line_ph = st.empty() if not light_mode else None
-            bar_ph = st.empty() if not light_mode else None
-            next_ph = st.empty() if not light_mode else None
-
-            # Main loop
-            last_rates = [rate1]
-            while T < sim_horizon:
-                # Average of last two cycle rates (per-second)
-                if len(last_rates) >= 2:
-                    avg_rate = {k: (last_rates[-1][k] + last_rates[-2][k]) / 2.0 for k in ["N","S","E","W"]}
-                else:
-                    avg_rate = last_rates[-1]
-                plan_next = plan_from_pcu(avg_rate)
-
-                # Preview next plan
-                if not light_mode and next_ph is not None:
-                    with next_ph.container():
-                        try:
-                            fig2 = go.Figure()
-                            Cn = plan_next['cycle']
-                            gNSn = plan_next['g_NS']; gEWn = plan_next['g_EW']
-                            t2 = 0.0
-                            if gNSn>0:
-                                fig2.add_trace(go.Bar(x=[gNSn], y=["NS"], orientation='h', base=t2, marker_color="#2ecc71", name='green'))
-                                t2 += gNSn
-                                fig2.add_trace(go.Bar(x=[YELLOW], y=["NS"], orientation='h', base=t2, marker_color="#f1c40f", name='amber'))
-                                t2 += YELLOW
-                            if gNSn>0 and gEWn>0:
-                                fig2.add_trace(go.Bar(x=[ALL_RED], y=["NS"], orientation='h', base=t2, marker_color="#e74c3c", name='red'))
-                                fig2.add_trace(go.Bar(x=[ALL_RED], y=["EW"], orientation='h', base=t2, marker_color="#e74c3c", showlegend=False))
-                                t2 += ALL_RED
-                            if gEWn>0:
-                                fig2.add_trace(go.Bar(x=[gEWn], y=["EW"], orientation='h', base=t2, marker_color="#2ecc71", showlegend=False))
-                                t2 += gEWn
-                                fig2.add_trace(go.Bar(x=[YELLOW], y=["EW"], orientation='h', base=t2, marker_color="#f1c40f", showlegend=False))
-                                t2 += YELLOW
-                            if t2 < Cn:
-                                tail2 = Cn - t2
-                                fig2.add_trace(go.Bar(x=[tail2], y=["NS"], orientation='h', base=t2, marker_color="#e74c3c", showlegend=False))
-                                fig2.add_trace(go.Bar(x=[tail2], y=["EW"], orientation='h', base=t2, marker_color="#e74c3c", showlegend=False))
-                            fig2.update_layout(barmode='stack', title=f"Next Cycle Preview — C={Cn:.1f}s", xaxis_title='Time (s)', yaxis_title='Phase Group', height=300)
-                            st.plotly_chart(fig2, use_container_width=True)
-                        except Exception:
-                            pass
-
-                # Execute this plan cycle
-                T_end2 = T + plan_next['cycle']
-                pcu_cycle = {}
-                if light_mode:
-                    # Micro-sample first 2 seconds and extrapolate
-                    sample_end = min(T + 2.0, sim_horizon)
-                    sample_dur = max(0.0, sample_end - T)
-                    for appr in ["N","S","E","W"]:
-                        val = count_slice(sim_inputs[appr], T, sample_end, sl[appr]["line"], sl[appr]["invert"]) if sim_inputs.get(appr) else 0.0
-                        rate = (val / sample_dur) if sample_dur > 0 else 0.0
-                        pcu_cycle[appr] = rate * plan_next['cycle']
-                    # Light mode progress print
-                    st.markdown("**[Light] Cycle sample (2s) PCU**: " + str({k: round(v,2) for k,v in pcu_cycle.items()}))
-                else:
-                    # Chunked counting with status logs every ~2s
-                    chunk = 2.0
-                    t_chunk_start = T
-                    pcu_cycle = {"N":0.0,"S":0.0,"E":0.0,"W":0.0}
-                    while t_chunk_start < min(T_end2, sim_horizon):
-                        t_chunk_end = min(t_chunk_start + chunk, T_end2, sim_horizon)
-                        for appr in ["N","S","E","W"]:
-                            inc = count_slice(sim_inputs[appr], t_chunk_start, t_chunk_end, sl[appr]["line"], sl[appr]["invert"]) if sim_inputs.get(appr) else 0.0
-                            pcu_cycle[appr] += inc
-                        # Status print for this chunk
-                        st.markdown(f"Chunk {t_chunk_start-T:.0f}-{t_chunk_end-T:.0f}s PCU: " + str({k: round(v,2) for k,v in pcu_cycle.items()}))
-                        t_chunk_start = t_chunk_end
-                dur_k = float(max(0.0, min(T_end2, sim_horizon) - T))
-                rate_k = {k: (pcu_cycle[k]/dur_k if dur_k>0 else 0.0) for k in ["N","S","E","W"]}
-                last_rates.append(rate_k)
-                logs.append({"t_start": T, "t_end": min(T_end2, sim_horizon), "pcu": pcu_cycle, "plan": plan_next})
-                T = T_end2
-
-                # Persist logs and update charts
-                with open(log_path, 'w', encoding='utf-8') as f:
-                    json.dump(logs, f, ensure_ascii=False, indent=2)
-                cycle_hist.append(plan_next['cycle'])
-                gns_hist.append(plan_next['g_NS'])
-                gew_hist.append(plan_next['g_EW'])
-                # Charts
-                if not light_mode and line_ph is not None:
-                    with line_ph.container():
-                        try:
-                            figL = go.Figure()
-                            figL.add_trace(go.Scatter(y=cycle_hist, x=list(range(1, len(cycle_hist)+1)), mode='lines+markers', name='Cycle'))
-                            figL.update_layout(title='Cycle Length per Cycle', xaxis_title='Cycle #', yaxis_title='Seconds', height=280)
-                            st.plotly_chart(figL, use_container_width=True)
-                        except Exception:
-                            pass
-                if not light_mode and bar_ph is not None:
-                    with bar_ph.container():
-                        try:
-                            figB = go.Figure()
-                            figB.add_trace(go.Bar(y=gns_hist, x=list(range(1, len(gns_hist)+1)), name='g_NS'))
-                            figB.add_trace(go.Bar(y=gew_hist, x=list(range(1, len(gew_hist)+1)), name='g_EW'))
-                            figB.update_layout(barmode='stack', title='NS/EW Greens per Cycle', xaxis_title='Cycle #', yaxis_title='Seconds', height=280)
-                            st.plotly_chart(figB, use_container_width=True)
-                        except Exception:
-                            pass
-
-            st.success(f"Simulation complete. Log saved to {log_path}")
+                    phase_fig = webster.create_phase_diagram(plan)
+                    st.plotly_chart(phase_fig, use_container_width=True)
+                except Exception as exc:
+                    st.warning(f"Could not render phase diagram: {exc}")
+            
+            # SUMO Results Section
+            if adaptive_state.get("sumo") and adaptive_state["sumo"].get("metrics"):
+                st.markdown("### 🚦 SUMO Simulation Results")
+                metrics = adaptive_state["sumo"]["metrics"]
+                
+                # Key metrics in columns
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.metric("Total Vehicles", metrics.get('vehicle_count', 0))
+                with col2:
+                    st.metric("Avg Delay (s/veh)", f"{metrics.get('avg_delay', 0.0):.2f}")
+                with col3:
+                    st.metric("Avg Waiting Time (s/veh)", f"{metrics.get('avg_waiting_time', 0.0):.2f}")
+                with col4:
+                    st.metric("Avg Travel Time (s/veh)", f"{metrics.get('avg_travel_time', 0.0):.2f}")
+                
+                # Additional metrics
+                col5, col6, col7, col8 = st.columns(4)
+                with col5:
+                    st.metric("Avg Time Loss (s/veh)", f"{metrics.get('avg_time_loss', 0.0):.2f}")
+                with col6:
+                    st.metric("Avg Depart Delay (s/veh)", f"{metrics.get('avg_depart_delay', 0.0):.2f}")
+                with col7:
+                    st.metric("Total Delay (s)", f"{metrics.get('total_delay', 0.0):.2f}")
+                with col8:
+                    st.metric("Total Waiting Time (s)", f"{metrics.get('total_waiting_time', 0.0):.2f}")
+                
+                # Throughput calculation
+                vehicle_count = metrics.get('vehicle_count', 0)
+                sim_time = 3600  # 1 hour simulation
+                throughput = (vehicle_count / sim_time * 3600) if sim_time > 0 else 0.0
+                st.metric("Throughput (veh/hr)", f"{throughput:.2f}")
+                
+                # Detailed metrics table
+                with st.expander("📋 Detailed SUMO Metrics Table"):
+                    metrics_df = pd.DataFrame([
+                        {"Metric": "Total Vehicles Processed", "Value": str(metrics.get('vehicle_count', 0))},
+                        {"Metric": "Average Delay (s/veh)", "Value": f"{metrics.get('avg_delay', 0.0):.2f}"},
+                        {"Metric": "Average Waiting Time (s/veh)", "Value": f"{metrics.get('avg_waiting_time', 0.0):.2f}"},
+                        {"Metric": "Average Travel Time (s/veh)", "Value": f"{metrics.get('avg_travel_time', 0.0):.2f}"},
+                        {"Metric": "Average Time Loss (s/veh)", "Value": f"{metrics.get('avg_time_loss', 0.0):.2f}"},
+                        {"Metric": "Average Depart Delay (s/veh)", "Value": f"{metrics.get('avg_depart_delay', 0.0):.2f}"},
+                        {"Metric": "Total Delay (s)", "Value": f"{metrics.get('total_delay', 0.0):.2f}"},
+                        {"Metric": "Total Waiting Time (s)", "Value": f"{metrics.get('total_waiting_time', 0.0):.2f}"},
+                        {"Metric": "Throughput (veh/hr)", "Value": f"{throughput:.2f}"},
+                    ])
+                    st.dataframe(metrics_df, use_container_width=True, hide_index=True)
+                
+                # Show additional info
+                sumo_results = adaptive_state.get("sumo", {})
+                if sumo_results.get("present_approaches"):
+                    st.info(f"**Present Approaches:** {', '.join(sumo_results.get('present_approaches', []))}")
+                
+                if sumo_results.get("files"):
+                    with st.expander("📁 Generated SUMO Files"):
+                        files = sumo_results.get("files", {})
+                        for file_type, file_path in files.items():
+                            st.text(f"{file_type}: {file_path}")
+    
     # Batch processing for four approaches (simplified)
     with st.expander("📦 Batch: Process four approach videos (NB/SB/EB/WB)"):
         st.markdown("Upload up to four videos below. We'll process them one by one and save per-approach CSVs plus a combined summary map for your notebook.")
@@ -1261,8 +1290,8 @@ def main():
                     stopline=stopline_coords if use_stopline else None,
                     mask_path=None,
                     invert_stopline=cfg['invert'],
-                    start_frame=cfg['start'],
-                    end_frame=cfg['end'],
+                    start_frame=frame_range[0],
+                    end_frame=frame_range[1],
                     crossing_tolerance=crossing_tolerance,
                     min_normal_motion=min_normal_motion,
                 )
@@ -1273,7 +1302,6 @@ def main():
                         'duration': res['duration']
                     }
             if batch_results:
-                import json
                 with open('outputs/intersection_summary.json', 'w', encoding='utf-8') as f:
                     json.dump(batch_results, f, ensure_ascii=False, indent=2)
                 rows = []
