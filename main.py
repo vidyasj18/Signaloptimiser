@@ -995,6 +995,14 @@ def main():
                 frame_stride=frame_stride_sim,
             )
             return res['total_pcu'] if res else 0.0
+        
+        DEFAULT_LANES = 2
+        DEFAULT_LOST_TIME = 12.0
+        SAT_PER_LANE = 1800
+        YELLOW = 3.0
+        ALL_RED = 2.0
+
+
 
         # Brain: Webster fallback (ML wrapper can plug in later)
         def plan_from_pcu(pcu_dict):
@@ -1195,23 +1203,23 @@ def main():
                 # Charts
                 if not light_mode and line_ph is not None:
                     with line_ph.container():
-                    try:
-                        figL = go.Figure()
-                        figL.add_trace(go.Scatter(y=cycle_hist, x=list(range(1, len(cycle_hist)+1)), mode='lines+markers', name='Cycle'))
-                        figL.update_layout(title='Cycle Length per Cycle', xaxis_title='Cycle #', yaxis_title='Seconds', height=280)
-                        st.plotly_chart(figL, use_container_width=True)
-                    except Exception:
-                        pass
+                        try:
+                            figL = go.Figure()
+                            figL.add_trace(go.Scatter(y=cycle_hist, x=list(range(1, len(cycle_hist)+1)), mode='lines+markers', name='Cycle'))
+                            figL.update_layout(title='Cycle Length per Cycle', xaxis_title='Cycle #', yaxis_title='Seconds', height=280)
+                            st.plotly_chart(figL, use_container_width=True)
+                        except Exception:
+                            pass
                 if not light_mode and bar_ph is not None:
                     with bar_ph.container():
-                    try:
-                        figB = go.Figure()
-                        figB.add_trace(go.Bar(y=gns_hist, x=list(range(1, len(gns_hist)+1)), name='g_NS'))
-                        figB.add_trace(go.Bar(y=gew_hist, x=list(range(1, len(gew_hist)+1)), name='g_EW'))
-                        figB.update_layout(barmode='stack', title='NS/EW Greens per Cycle', xaxis_title='Cycle #', yaxis_title='Seconds', height=280)
-                        st.plotly_chart(figB, use_container_width=True)
-                    except Exception:
-                        pass
+                        try:
+                            figB = go.Figure()
+                            figB.add_trace(go.Bar(y=gns_hist, x=list(range(1, len(gns_hist)+1)), name='g_NS'))
+                            figB.add_trace(go.Bar(y=gew_hist, x=list(range(1, len(gew_hist)+1)), name='g_EW'))
+                            figB.update_layout(barmode='stack', title='NS/EW Greens per Cycle', xaxis_title='Cycle #', yaxis_title='Seconds', height=280)
+                            st.plotly_chart(figB, use_container_width=True)
+                        except Exception:
+                            pass
 
             st.success(f"Simulation complete. Log saved to {log_path}")
     # Batch processing for four approaches (simplified)
