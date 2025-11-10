@@ -1,2 +1,2 @@
 <?xml version='1.0' encoding='utf-8'?>
-<additional><tlLogic id="center" type="static" programID="ML" offset="0"><phase duration="35" state="GGGGrrr" /><phase duration="3" state="yyyyrrr" /><phase duration="2" state="rrrrrrr" /><phase duration="10" state="rrrrGGG" /><phase duration="3" state="rrrryyy" /><phase duration="6" state="rrrrrrr" /></tlLogic></additional>
+<additional><tlLogic id="center" type="static" programID="ML" offset="0"><phase duration="25" state="GGGrrrGGGrrr" /><phase duration="3" state="yyyrrryyyrrr" /><phase duration="2" state="rrrrrrrrrrrr" /><phase duration="23" state="rrrrrrrrrGGG" /><phase duration="3" state="rrrrrrrrryyy" /><phase duration="4" state="rrrrrrrrrrrr" /></tlLogic></additional>

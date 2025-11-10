@@ -1,30 +1,38 @@
 {
-    "method": "ML",
-    "cycle_length": 60.054875407495544,
-    "approaches": {
-      "NB": {
-        "effective_green": 17.81681000650002,
-        "arrival_flow_rate": 2542.0,
-        "saturation_flow_rate": 3600,
-        "green": 17.81681000650002,
-        "amber": 3.0,
-        "red": 39.238065400995524
-      },
-      "SB": {
-        "effective_green": 17.61790496406298,
-        "arrival_flow_rate": 2760.0,
-        "saturation_flow_rate": 3600,
-        "green": 17.61790496406298,
-        "amber": 3.0,
-        "red": 39.436970443432564
-      },
-      "WB": {
-        "effective_green": 10.199355726362754,
-        "arrival_flow_rate": 1500.0,
-        "saturation_flow_rate": 3600,
-        "green": 10.199355726362754,
-        "amber": 3.0,
-        "red": 46.85551968113279
-      }
+  "method": "ML",
+  "cycle_length": 65.60897862988536,
+  "approaches": {
+    "NB": {
+      "effective_green": 18.39956051920743,
+      "arrival_flow_rate": 2880.0,
+      "saturation_flow_rate": 3600,
+      "green": 18.39956051920743,
+      "amber": 3.0,
+      "red": 44.20941811067793
+    },
+    "SB": {
+      "effective_green": 14.923920853107543,
+      "arrival_flow_rate": 2760.0,
+      "saturation_flow_rate": 3600,
+      "green": 14.923920853107543,
+      "amber": 3.0,
+      "red": 47.68505777677781
+    },
+    "EB": {
+      "effective_green": 8.18160729361671,
+      "arrival_flow_rate": 1560.0,
+      "saturation_flow_rate": 3600,
+      "green": 8.18160729361671,
+      "amber": 3.0,
+      "red": 54.42737133626865
+    },
+    "WB": {
+      "effective_green": 12.103889963953671,
+      "arrival_flow_rate": 3480.0,
+      "saturation_flow_rate": 3600,
+      "green": 12.103889963953671,
+      "amber": 3.0,
+      "red": 50.50508866593169
     }
   }
+}

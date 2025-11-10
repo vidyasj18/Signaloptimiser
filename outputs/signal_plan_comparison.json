@@ -1,0 +1,90 @@
+{
+  "ml_plan": {
+    "NB": {
+      "delay": 21.898359564311384,
+      "queue_length": 17.518687651449106,
+      "throughput": 1009.5937972577228,
+      "LOS": "C",
+      "cycle_length": 65.60897862988536,
+      "effective_green": 18.39956051920743,
+      "arrival_flow_rate": 2880.0,
+      "saturation_flow_rate": 3600
+    },
+    "SB": {
+      "delay": 23.713792609471092,
+      "queue_length": 18.180574333927837,
+      "throughput": 818.8835765035751,
+      "LOS": "C",
+      "cycle_length": 65.60897862988536,
+      "effective_green": 14.923920853107543,
+      "arrival_flow_rate": 2760.0,
+      "saturation_flow_rate": 3600
+    },
+    "EB": {
+      "delay": 26.568836967544893,
+      "queue_length": 11.513162685936122,
+      "throughput": 448.9291995105643,
+      "LOS": "C",
+      "cycle_length": 65.60897862988536,
+      "effective_green": 8.18160729361671,
+      "arrival_flow_rate": 1560.0,
+      "saturation_flow_rate": 3600
+    },
+    "WB": {
+      "delay": 26.55635041253894,
+      "queue_length": 25.671138732120973,
+      "throughput": 664.1469625071247,
+      "LOS": "C",
+      "cycle_length": 65.60897862988536,
+      "effective_green": 12.103889963953671,
+      "arrival_flow_rate": 3480.0,
+      "saturation_flow_rate": 3600
+    }
+  },
+  "webster_plan": {
+    "NB": {
+      "delay": 32.172215986314036,
+      "queue_length": 25.737772789051228,
+      "throughput": 839.9413776257935,
+      "LOS": "C",
+      "cycle_length": 89.03225806451614,
+      "effective_green": 20.772743747734683,
+      "arrival_flow_rate": 2880.0,
+      "saturation_flow_rate": 3600
+    },
+    "SB": {
+      "delay": 32.3867102297602,
+      "queue_length": 24.829811176149484,
+      "throughput": 804.943820224719,
+      "LOS": "C",
+      "cycle_length": 89.03225806451614,
+      "effective_green": 19.90721275824574,
+      "arrival_flow_rate": 2760.0,
+      "saturation_flow_rate": 3600
+    },
+    "EB": {
+      "delay": 35.943785166915724,
+      "queue_length": 15.575640238996815,
+      "throughput": 454.9682462139718,
+      "LOS": "D",
+      "cycle_length": 89.03225806451614,
+      "effective_green": 11.251902863356293,
+      "arrival_flow_rate": 1560.0,
+      "saturation_flow_rate": 3600
+    },
+    "WB": {
+      "delay": 31.557021599809353,
+      "queue_length": 30.505120879815706,
+      "throughput": 1014.9291646311679,
+      "LOS": "C",
+      "cycle_length": 89.03225806451614,
+      "effective_green": 25.100398695179422,
+      "arrival_flow_rate": 3480.0,
+      "saturation_flow_rate": 3600
+    }
+  },
+  "summary": {
+    "ml_plan_file": "outputs/ml_signal_plan.json",
+    "webster_plan_file": "outputs/webster_signal_plan.json"
+  }
+}

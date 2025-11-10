@@ -1,23 +1,19 @@
 {
-  "ml_metrics": {
-    "vehicle_count": 552,
-    "avg_delay": 8.840579710144928,
-    "avg_waiting_time": 8.840579710144928,
-    "avg_travel_time": 52.2481884057971,
-    "avg_time_loss": 14.449510869565216,
-    "avg_depart_delay": 0.4981521739130436,
-    "total_delay": 4880.0,
-    "total_waiting_time": 4880.0
+  "ML": {
+    "average_delay": 42.19081272084806,
+    "average_waiting_time": 42.19081272084806,
+    "average_travel_time": 86.59540636042402,
+    "average_time_loss": 48.49259717314488,
+    "total_throughput": 566,
+    "vehicle_count": 566
   },
-  "webster_metrics": {
-    "vehicle_count": 551,
-    "avg_delay": 8.956442831215972,
-    "avg_waiting_time": 8.956442831215972,
-    "avg_travel_time": 52.32304900181488,
-    "avg_time_loss": 14.547822141560788,
-    "avg_depart_delay": 0.4976043557168784,
-    "total_delay": 4935.0,
-    "total_waiting_time": 4935.0
+  "Webster": {
+    "average_delay": 42.93274336283186,
+    "average_waiting_time": 42.93274336283186,
+    "average_travel_time": 87.39823008849558,
+    "average_time_loss": 49.27136283185837,
+    "total_throughput": 565,
+    "vehicle_count": 565
   },
   "summary": {
     "ml_wins": 4,

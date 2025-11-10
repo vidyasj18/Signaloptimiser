@@ -1,13 +1,12 @@
 """
-SUMO Simulation Script for Signal Plan Comparison
+SUMO Simulation Script (Webster-only)
 
-This script:
-1. Reads ML and Webster signal plan JSONs
-2. Generates a SUMO network (4-way intersection)
-3. Creates traffic light definitions from signal timings
-4. Generates vehicle routes based on PCU values
-5. Runs simulations for both plans
-6. Extracts and compares performance metrics
+Workflow:
+1. Read intersection PCU demand data
+2. Generate Webster signal plan JSON
+3. Build a SUMO network and routing files
+4. Run a single SUMO simulation for the Webster plan
+5. Extract and report performance metrics
 """
 
 import json
@@ -18,6 +17,8 @@ import xml.etree.ElementTree as ET
 from xml.dom import minidom
 from typing import Dict, List, Tuple
 import math
+from pathlib import Path
+import webster
 
 # Try to import SUMO libraries
 try:
@@ -630,15 +631,24 @@ def create_routes(pcu_data: Dict, present_approaches: set, output_path: str = 'r
             'WB': 'EB_out'    # WB goes through
         }
     else:
-        # 4-way intersection - use opposite direction
-        opposite_map = {'NB': 'SB', 'SB': 'NB', 'EB': 'WB', 'WB': 'EB'}
+        # 4-way intersection - use connections that netconvert creates
+        # Netconvert creates turn movements (left/right) but not always straight through
+        # For a standard 4-way, use right-turn movements which are always valid
+        turn_right_map = {
+            'NB': 'EB_out',  # NB turns right to go east
+            'EB': 'SB_out',  # EB turns right to go south  
+            'SB': 'WB_out',  # SB turns right to go west
+            'WB': 'NB_out'   # WB turns right to go north
+        }
         for approach in present_approaches:
-            opposite = opposite_map.get(approach)
-            if opposite and opposite in present_approaches:
-                approach_destinations[approach] = f'{opposite}_out'
+            # Try right turn first (most reliable)
+            if approach in turn_right_map:
+                approach_destinations[approach] = turn_right_map[approach]
             else:
-                # Fallback
+                # Fallback to any available output
+                print(f"Fallback to any available output for {approach}")
                 available = [f'{appr}_out' for appr in present_approaches if appr != approach]
+                print(f"Available outputs: {available}")
                 approach_destinations[approach] = available[0] if available else f'{approach}_out'
     
     print(f"  Route destinations: {approach_destinations}")
@@ -784,201 +794,154 @@ def extract_sumo_metrics(tripinfo_file: str) -> Dict:
     return metrics
 
 
-def compare_sumo_results(ml_metrics: Dict, webster_metrics: Dict):
-    """Compare SUMO simulation results"""
-    print("\n" + "=" * 80)
-    print("SUMO SIMULATION COMPARISON")
-    print("=" * 80)
-    
-    if not ml_metrics or not webster_metrics:
-        print("ERROR: Missing simulation results")
+def print_sumo_metrics(metrics: Dict) -> None:
+    """Pretty-print SUMO metrics for a single plan."""
+    if not metrics:
+        print("No SUMO metrics available.")
         return
-    
-    print(f"\n{'Metric':<30} {'ML-based':<25} {'Webster-based':<25} {'Better':<10}")
-    print("-" * 80)
-    
-    better = {'ML': 0, 'Webster': 0}
-    
-    # Metrics where lower is better
-    lower_better = ['avg_delay', 'avg_waiting_time', 'avg_travel_time', 'avg_time_loss', 'avg_depart_delay']
-    
-    for metric in lower_better:
-        ml_val = ml_metrics.get(metric, 0)
-        web_val = webster_metrics.get(metric, 0)
-        
-        if ml_val < web_val:
-            better_plan = 'ML'
-            better['ML'] += 1
-        elif web_val < ml_val:
-            better_plan = 'Webster'
-            better['Webster'] += 1
-        else:
-            better_plan = 'Tie'
-        
-        print(f"{metric.capitalize().replace('_', ' '):<30} {ml_val:<25.2f} {web_val:<25.2f} {better_plan:<10}")
-    
-    # Vehicle count (should be similar)
-    ml_count = ml_metrics.get('vehicle_count', 0)
-    web_count = webster_metrics.get('vehicle_count', 0)
-    print(f"{'Vehicle Count':<30} {ml_count:<25} {web_count:<25} {'N/A':<10}")
-    
+
     print("\n" + "=" * 80)
-    print("OVERALL SUMMARY")
+    print("SUMO PERFORMANCE SUMMARY (Webster)")
     print("=" * 80)
-    print(f"ML-based wins: {better['ML']} metrics")
-    print(f"Webster-based wins: {better['Webster']} metrics")
-    
-    if better['ML'] > better['Webster']:
-        print(f"\n>>> OVERALL BETTER PLAN (SUMO): ML-based <<<")
-    elif better['Webster'] > better['ML']:
-        print(f"\n>>> OVERALL BETTER PLAN (SUMO): Webster-based <<<")
-    else:
-        print(f"\n>>> OVERALL: TIE <<<")
-    
-    # Save comparison
-    comparison = {
-        'ml_metrics': ml_metrics,
-        'webster_metrics': webster_metrics,
-        'summary': {
-            'ml_wins': better['ML'],
-            'webster_wins': better['Webster'],
-            'better_plan': 'ML' if better['ML'] > better['Webster'] else ('Webster' if better['Webster'] > better['ML'] else 'Tie')
-        }
-    }
-    
-    output_path = 'outputs/sumo_comparison.json'
-    os.makedirs('outputs', exist_ok=True)
-    with open(output_path, 'w', encoding='utf-8') as f:
-        json.dump(comparison, f, ensure_ascii=False, indent=2)
-    
-    print(f"\n=== Comparison saved to {output_path} ===")
+    for key in [
+        ('vehicle_count', 'Total Vehicles Processed'),
+        ('avg_delay', 'Average Delay (s/veh)'),
+        ('avg_waiting_time', 'Average Waiting Time (s/veh)'),
+        ('avg_travel_time', 'Average Travel Time (s/veh)'),
+        ('avg_time_loss', 'Average Time Loss (s/veh)'),
+        ('avg_depart_delay', 'Average Depart Delay (s/veh)'),
+        ('total_delay', 'Total Delay (s)'),
+        ('total_waiting_time', 'Total Waiting Time (s)')
+    ]:
+        metric_key, label = key
+        value = metrics.get(metric_key)
+        if value is None:
+            continue
+        if isinstance(value, float):
+            print(f"{label:<40}: {value:>10.2f}")
+        else:
+            print(f"{label:<40}: {value}")
+
+    print("=" * 80)
 
 
 def main():
-    """Main function to run SUMO simulations and compare results"""
+    """Run SUMO simulation for Webster timing plan only."""
     print("=" * 80)
-    print("SUMO SIMULATION FOR SIGNAL PLAN COMPARISON")
+    print("SUMO SIMULATION FOR WEBSTER PLAN")
     print("=" * 80)
-    
-    # Check if SUMO is available
+
     if not SUMO_AVAILABLE:
         print("\nWarning: SUMO Python libraries not found.")
         print("The script will generate SUMO files but cannot run simulations.")
         print("Install SUMO from: https://sumo.dlr.de/docs/Downloads.php")
-        print("And ensure sumolib and traci are in your PYTHONPATH")
-    
-    # File paths
-    ml_plan_path = 'outputs/ml_signal_plan.json'
-    webster_plan_path = 'outputs/webster_signal_plan.json'
-    intersection_summary_path = 'outputs/intersection_summary.json'
-    
-    # Load signal plans
-    print("\nLoading signal plans...")
-    try:
-        with open(ml_plan_path, 'r') as f:
-            ml_plan = json.load(f)
-        print(f"Loaded: {ml_plan_path}")
-    except FileNotFoundError:
-        print(f"ERROR: {ml_plan_path} not found. Run final.py first.")
+        print("Ensure sumolib and traci are in your PYTHONPATH.")
+
+    # Step 0: generate Webster plan
+    print("\n" + "=" * 80)
+    print("STEP 0: Generating Webster Signal Plan")
+    print("=" * 80)
+    webster.main()
+
+    plan_path = Path('outputs/webster_signal_plan.json')
+    if not plan_path.exists():
+        print(f"ERROR: {plan_path} not found after running webster.py.")
         return
-    
-    try:
-        with open(webster_plan_path, 'r') as f:
-            webster_plan = json.load(f)
-        print(f"Loaded: {webster_plan_path}")
-    except FileNotFoundError:
-        print(f"ERROR: {webster_plan_path} not found. Run webster.py first.")
-        return
-    
+
+    with plan_path.open('r', encoding='utf-8') as f:
+        webster_plan = json.load(f)
+    print(f"\nLoaded Webster plan: {plan_path}")
+
     # Load intersection summary for PCU data
-    try:
-        with open(intersection_summary_path, 'r') as f:
+    intersection_summary_path = Path('outputs/intersection_summary.json')
+    if intersection_summary_path.exists():
+        with intersection_summary_path.open('r', encoding='utf-8') as f:
             intersection_data = json.load(f)
-        print(f"Loaded: {intersection_summary_path}")
-    except FileNotFoundError:
-        print(f"Warning: {intersection_summary_path} not found. Using signal plan PCU values.")
+        print(f"Loaded intersection demands: {intersection_summary_path}")
+    else:
+        print(f"Warning: {intersection_summary_path} not found. Deriving demand from signal plan.")
         intersection_data = {}
-        for appr, data in ml_plan['approaches'].items():
-            intersection_data[appr] = {'total_pcu': data['arrival_flow_rate']}
-    
-    # Create SUMO network (pass signal plans to detect which approaches exist)
+        for appr, data in webster_plan.get('approaches', {}).items():
+            intersection_data[appr] = {'total_pcu': data.get('arrival_flow_rate', 0)}
+
+    # Create SUMO network
     print("\n" + "=" * 80)
     print("STEP 1: Creating SUMO Network")
     print("=" * 80)
-    create_sumo_network([ml_plan, webster_plan], 'sumo_network.net.xml')
-    
-    # Create traffic lights
+    create_sumo_network([webster_plan], 'sumo_network.net.xml')
+
+    # Create Webster traffic lights
     print("\n" + "=" * 80)
-    print("STEP 2: Creating Traffic Light Definitions")
+    print("STEP 2: Creating Traffic Light Definition")
     print("=" * 80)
-    create_traffic_lights(ml_plan, 'ml_traffic_lights.add.xml', 'ML', 'sumo_network.net.xml')
     create_traffic_lights(webster_plan, 'webster_traffic_lights.add.xml', 'Webster', 'sumo_network.net.xml')
-    
-    # Detect present approaches from signal plans
+
+    # Detect present approaches
     present_approaches = set()
-    for plan in [ml_plan, webster_plan]:
-        approaches = plan.get('approaches', {})
-        for appr_id in approaches.keys():
-            if approaches[appr_id].get('green', 0) > 0:
-                present_approaches.add(appr_id)
-    
+    for appr_id, data in webster_plan.get('approaches', {}).items():
+        if data.get('green', 0) > 0:
+            present_approaches.add(appr_id)
     if not present_approaches:
         present_approaches = {'NB', 'SB', 'EB', 'WB'}
-    
+
     # Create routes
     print("\n" + "=" * 80)
     print("STEP 3: Creating Vehicle Routes")
     print("=" * 80)
     create_routes(intersection_data, present_approaches, 'routes.rou.xml')
-    
-    # Create SUMO configs
+
+    # Create SUMO config
     print("\n" + "=" * 80)
-    print("STEP 4: Creating SUMO Configuration Files")
+    print("STEP 4: Creating SUMO Configuration")
     print("=" * 80)
-    create_sumo_config('sumo_network.net.xml', 'routes.rou.xml', 
-                       'ml_traffic_lights.add.xml', 'ml_config.sumocfg', 'ML')
-    create_sumo_config('sumo_network.net.xml', 'routes.rou.xml',
-                       'webster_traffic_lights.add.xml', 'webster_config.sumocfg', 'Webster')
-    
-    # Run simulations
+    create_sumo_config(
+        'sumo_network.net.xml',
+        'routes.rou.xml',
+        'webster_traffic_lights.add.xml',
+        'webster_config.sumocfg',
+        'Webster'
+    )
+
+    if not SUMO_AVAILABLE:
+        print("\nSUMO not available; skipping simulation. Config and network files are ready.")
+        return
+
+    # Run simulation
     print("\n" + "=" * 80)
-    print("STEP 5: Running SUMO Simulations")
+    print("STEP 5: Running SUMO Simulation")
     print("=" * 80)
-    print("Note: This requires SUMO to be installed and in PATH")
-    
-    ml_success = run_sumo_simulation('ml_config.sumocfg', 'ML', use_gui=False)
-    webster_success = run_sumo_simulation('webster_config.sumocfg', 'Webster', use_gui=False)
-    
-    # Extract and compare results
-    if ml_success and webster_success:
+    print("Note: This requires SUMO to be installed and in PATH.")
+
+    success = run_sumo_simulation('webster_config.sumocfg', 'Webster', use_gui=False)
+
+    if success:
         print("\n" + "=" * 80)
-        print("STEP 6: Extracting and Comparing Results")
+        print("STEP 6: Extracting Results")
         print("=" * 80)
-        
-        ml_metrics = extract_sumo_metrics('tripinfo_ML.xml')
-        webster_metrics = extract_sumo_metrics('tripinfo_Webster.xml')
-        
-        if ml_metrics and webster_metrics:
-            compare_sumo_results(ml_metrics, webster_metrics)
+        metrics = extract_sumo_metrics('tripinfo_Webster.xml')
+        if metrics:
+            print_sumo_metrics(metrics)
+            os.makedirs('outputs', exist_ok=True)
+            output_path = Path('outputs/sumo_metrics_webster.json')
+            with output_path.open('w', encoding='utf-8') as f:
+                json.dump(metrics, f, ensure_ascii=False, indent=2)
+            print(f"\nSaved SUMO metrics to {output_path}")
         else:
-            print("ERROR: Could not extract metrics from simulation outputs")
+            print("ERROR: Could not extract metrics from tripinfo output.")
     else:
-        print("\nSimulations did not complete successfully.")
-        print("SUMO files have been generated. You can:")
-        print("1. Install SUMO and run: sumo -c ml_config.sumocfg")
-        print("2. Or use SUMO GUI: sumo-gui -c ml_config.sumocfg")
-        print("3. Then manually extract metrics from tripinfo XML files")
-    
+        print("\nSimulation did not complete successfully.")
+        print("Generated files are available for manual execution with SUMO GUI/CLI.")
+
     print("\n" + "=" * 80)
     print("SUMO SIMULATION COMPLETE")
     print("=" * 80)
     print("\nGenerated files:")
-    print("  - sumo_network.net.xml (network)")
-    print("  - ml_traffic_lights.add.xml (ML traffic lights)")
-    print("  - webster_traffic_lights.add.xml (Webster traffic lights)")
-    print("  - routes.rou.xml (vehicle routes)")
-    print("  - ml_config.sumocfg (ML simulation config)")
-    print("  - webster_config.sumocfg (Webster simulation config)")
+    print("  - sumo_network.net.xml")
+    print("  - webster_traffic_lights.add.xml")
+    print("  - routes.rou.xml")
+    print("  - webster_config.sumocfg")
+    if success:
+        print("  - tripinfo_Webster.xml (simulation output)")
 
 
 if __name__ == "__main__":

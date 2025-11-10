@@ -47,7 +47,8 @@ def webster_cycle_from_capacity(total_flow: float, capacity: float, lost_time: f
 
 def main() -> None:
     # Fallback PCU if JSON missing/empty (edit as needed)
-    fallback_pcu = {"N": 2542.0, "S": 2760.0, "E": 0.0, "W": 1500.0}
+    # fallback_pcu = {"N": 2542.0, "S": 2760.0, "E": 0.0, "W": 1500.0}
+    fallback_pcu = {"N": 2880.0, "S": 2760.0, "E": 1560.0, "W": 3480.0}
 
     pcu = load_pcu_from_summary()
     if not any(pcu.values()):
