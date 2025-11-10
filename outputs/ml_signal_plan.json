@@ -1,0 +1,30 @@
+{
+    "method": "ML",
+    "cycle_length": 60.054875407495544,
+    "approaches": {
+      "NB": {
+        "effective_green": 17.81681000650002,
+        "arrival_flow_rate": 2542.0,
+        "saturation_flow_rate": 3600,
+        "green": 17.81681000650002,
+        "amber": 3.0,
+        "red": 39.238065400995524
+      },
+      "SB": {
+        "effective_green": 17.61790496406298,
+        "arrival_flow_rate": 2760.0,
+        "saturation_flow_rate": 3600,
+        "green": 17.61790496406298,
+        "amber": 3.0,
+        "red": 39.436970443432564
+      },
+      "WB": {
+        "effective_green": 10.199355726362754,
+        "arrival_flow_rate": 1500.0,
+        "saturation_flow_rate": 3600,
+        "green": 10.199355726362754,
+        "amber": 3.0,
+        "red": 46.85551968113279
+      }
+    }
+  }

@@ -1,0 +1,30 @@
+{
+    "method": "Webster",
+    "cycle_length": 62.131065532766385,
+    "approaches": {
+      "NB": {
+        "effective_green": 18.734661656026486,
+        "arrival_flow_rate": 2542.0,
+        "saturation_flow_rate": 3600,
+        "green": 18.734661656026486,
+        "amber": 3.0,
+        "red": 40.396403876739896
+      },
+      "SB": {
+        "effective_green": 20.34133208915543,
+        "arrival_flow_rate": 2760.0,
+        "saturation_flow_rate": 3600,
+        "green": 20.34133208915543,
+        "amber": 3.0,
+        "red": 38.789733443610956
+      },
+      "WB": {
+        "effective_green": 11.055071787584474,
+        "arrival_flow_rate": 1500.0,
+        "saturation_flow_rate": 3600,
+        "green": 11.055071787584474,
+        "amber": 3.0,
+        "red": 48.07599374518191
+      }
+    }
+  }

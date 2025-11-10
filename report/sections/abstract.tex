@@ -1,0 +1,65 @@
+\chapter{Abstract}
+\label{ch:abstract}
+
+\section{Summary of Objectives}
+\label{sec:objectives}
+
+The primary objective of this project is to optimize traffic signal timings at key urban intersections in Mangalore using a blend of traditional traffic engineering principles (such as Webster's method) and modern machine learning techniques. By collecting and analyzing real-world traffic data, the project aims to:
+
+\begin{itemize}
+    \item \textbf{Improve traffic flow and reduce congestion:} Design traffic signal plans that minimize vehicle delays and enhance movement efficiency at critical city junctions.
+    
+    \item \textbf{Assess the impact of current and proposed signal timings:} Quantitatively measure how revised signal timings can lower wait times, reduce stoppages, and improve intersection performance.
+    
+    \item \textbf{Demonstrate the use of innovative methodologies:} Apply advanced tools including YOLOv8 computer vision for automated vehicle detection, Python, Jupyter notebook, and ML models like Linear Regression and Random Forest to predict optimal signal cycles and green splits, making the process data-driven rather than purely manual.
+    
+    \item \textbf{Provide actionable planning recommendations:} Generate clear suggestions for city planners and engineers regarding signal upgrades, intersection control, and best practices based on field data, validated calculations, and simulation results.
+    
+    \item \textbf{Integrate field observations and standards:} Ensure all work aligns with IRC:106-1990 standards and standard traffic engineering practices, using actual intersection measurements for grounded recommendations.
+    
+    \item \textbf{Document challenges and adaptive solutions:} Record practical issues faced during fieldwork and data collection, and demonstrate creative problem solving.
+\end{itemize}
+
+In essence, this project seeks to create a comprehensive blueprint for data-informed traffic signal optimization in Indian urban settings, combining theory, field practice, and technology for measurable improvements.
+
+\section{Key Design Features}
+\label{sec:design_features}
+
+\begin{itemize}
+    \item \textbf{Intersection Selection and Classification:} The project involves the careful selection of two urban intersections in Mangalore, each representing distinct operational characteristics—one signalized (Jyoti Circle) and one manually controlled (junction near KMC Hospital). This selection enables the study to address diverse urban traffic challenges.
+    
+    \item \textbf{Data-Driven Approach:} Real-time, location-specific video data and manual counts form the basis for accurate traffic volume assessment. The use of an Insta360 camera, adopted to overcome adverse weather and equipment shortages, ensures comprehensive observation of vehicular movements with minimal manpower.
+    
+    \item \textbf{Automated Vehicle Detection using YOLO:} Implementation of YOLOv8 (You Only Look Once) deep learning framework for real-time vehicle detection, classification, and counting from recorded traffic videos. The system accurately identifies multiple vehicle classes (cars, buses, two-wheelers, trucks) and automatically converts counts into Passenger Car Units (PCUs) using IRC standards, eliminating manual counting errors, reducing labor requirements, and enabling scalable, reproducible traffic analysis across multiple intersections.
+    
+    \item \textbf{Standards-Based Methodology:} All analyses, designs, and recommendations are grounded in established traffic engineering norms, such as IRC:106-1990 and Webster's method, offering reliability and consistency with professional standards.
+    
+    \item \textbf{Quantitative Signal Optimization:} The project applies Webster's formula to determine optimal cycle lengths and allocate green splits for each phase, forming the foundation of the signal design for the studied intersections.
+    
+    \item \textbf{Integration of Machine Learning:} Statistical and machine learning models (Linear Regression, Random Forest), developed in Python, are utilized to predict optimal signal timings and green times, introducing adaptive intelligence and enhancing traditional calculation methods.
+    
+    \item \textbf{User-Friendly Outputs:} Traffic flows, signal phases, and delays are visualized using charts and diagrams integrated within Jupyter Notebooks. This approach improves the clarity of results and supports communication with technical and non-technical stakeholders alike.
+    
+    \item \textbf{Practical Reporting and Documentation:} The entire workflow is systematically documented, covering site selection, data collection, modeling, optimization, and recommendations. Special attention is given to recording encountered challenges, adaptive responses, and decision-making transparency.
+\end{itemize}
+
+Through these design features, the project ensures a robust, standards-aligned, and innovative approach to urban traffic signal optimization.
+
+\section{Overview}
+\label{sec:overview}
+
+Urban intersections are critical nodes in any city's road network, serving as convergence points for multiple traffic streams and dictating overall flow characteristics. In cities like Mangalore, rapid urbanization and increased vehicular density have turned intersection management into an urgent engineering challenge. Poorly optimized traffic signals often lead to congestion, longer delays, inefficient movement, and heightened risk of accidents, especially during peak hours. Reliable signal timing plans can substantially improve roadway performance, minimize travel delays, and support sustainable urban mobility.
+
+This project investigates two significant intersections in Mangalore: one under standard signalized operation (Jyoti Circle) and another operating with manual police control (near KMC Hospital). By collecting field data through automated YOLO-based vehicle detection from recorded videos, analyzing site-specific traffic volumes, and leveraging both conventional (Webster's method) and machine learning-based optimization tools (Linear Regression, Random Forest), the study seeks to quantify intersection performance and propose actionable upgrades validated through SUMO microsimulation.
+
+\section{Findings}
+\label{sec:findings}
+
+The optimized results of the project provide clear, actionable outputs that enhance intersection efficiency based on actual field observations. Using automated YOLOv8 vehicle detection to extract traffic volume data (PCUs) from video footage at both Jyoti Circle and Hampankatta Circle, the team applied Webster's formula and validated the results through machine learning models. This process yielded optimal cycle times ranging from 60 to 92 seconds depending on traffic demand, with precise green splits allocated for each lane and movement. The ML-based approach demonstrated superior performance, reducing average vehicle delay by 1.3\% compared to traditional Webster method.
+
+Validation through SUMO microsimulation confirmed the effectiveness of the ML-enhanced approach. Under identical traffic conditions, the ML-based signal plan outperformed Webster's method in 4 out of 5 performance metrics, achieving average delays of 8.84 seconds compared to 8.96 seconds for Webster. The ML model also showed improvements in average travel time (52.25s vs 52.32s) and average time loss (14.45s vs 14.55s), demonstrating its ability to optimize signal timings beyond theoretical calculations.
+
+In addition to the quantitative results, the project produced detailed signal phasing diagrams that visually represent the recommended timing strategies for each intersection. These diagrams illustrate the sequence and duration of green, amber, and red phases for every movement, providing city engineers and planners with a practical reference for implementation. SUMO simulation outputs, including network files, traffic light programs, and performance metrics, offer comprehensive evidence of the improvements achieved through systematic signal timing optimization. The approach and results demonstrate a robust methodology for transforming traffic management with data-driven design validated through microsimulation.
+
+\newpage
+

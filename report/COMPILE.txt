@@ -1,0 +1,145 @@
+========================================
+LATEX REPORT COMPILATION GUIDE
+========================================
+
+STRUCTURE CREATED:
+------------------
+report/
+├── main.tex                    Main LaTeX file (compile this)
+├── sections/                   Individual chapter files
+│   ├── titlepage.tex          Title page with project details
+│   ├── declaration.tex        Student declaration
+│   ├── certificate.tex        Supervisor certificate
+│   ├── acknowledgement.tex    Acknowledgements
+│   ├── abstract.tex           Chapter 1: Abstract
+│   ├── introduction.tex       Chapter 2: Introduction
+│   ├── methodology.tex        Chapter 3: Methodology
+│   ├── irc_standards.tex      Chapter 4: IRC Standards & Assumptions
+│   ├── ml_optimization.tex    Chapter 5: ML Signal Optimization
+│   ├── yolo_optimization.tex  Chapter 6: YOLO Detection & Analysis
+│   ├── sumo_validation.tex    Chapter 7: SUMO Simulation Validation
+│   ├── conclusion.tex         Chapter 8: Conclusion
+│   └── references.tex         Chapter 9: References & Bibliography
+├── images/                     Place your figures here
+└── README.md                   Detailed documentation
+
+TOTAL FILES: 13 section files + 1 main file
+
+COMPILATION STEPS:
+------------------
+
+METHOD 1: Using pdflatex (Most Common)
+---------------------------------------
+1. Open terminal/command prompt
+2. Navigate to report directory:
+   cd report
+
+3. Run pdflatex twice (for TOC and references):
+   pdflatex main.tex
+   pdflatex main.tex
+
+4. Output: main.pdf
+
+
+METHOD 2: Using Overleaf (Online)
+----------------------------------
+1. Go to https://www.overleaf.com
+2. Create new project > Upload Project
+3. Zip the entire "report" folder
+4. Upload the zip file
+5. Compile automatically (click Recompile)
+
+
+METHOD 3: Using TeXstudio (Desktop)
+------------------------------------
+1. Install TeXstudio from texstudio.org
+2. Open main.tex
+3. Press F5 or click Build & View
+4. PDF generates automatically
+
+
+METHOD 4: Using latexmk (Automatic)
+------------------------------------
+cd report
+latexmk -pdf main.tex
+
+This handles multiple compilations automatically.
+
+
+FEATURES INCLUDED:
+------------------
+✓ Hyperlinked table of contents (clickable)
+✓ List of figures (auto-generated)
+✓ List of tables (auto-generated)
+✓ Chapter-wise organization
+✓ Professional formatting
+✓ Cross-references support
+✓ Equation numbering
+✓ Citation support (ready for bibliography)
+
+
+ADDING IMAGES:
+--------------
+1. Place image files in report/images/ folder
+   (Supported: .png, .jpg, .pdf, .eps)
+
+2. In any .tex file, add:
+   \begin{figure}[h]
+       \centering
+       \includegraphics[width=0.8\textwidth]{your_image_name}
+       \caption{Description of your image}
+       \label{fig:your_label}
+   \end{figure}
+
+3. Reference in text:
+   See Figure \ref{fig:your_label}
+
+
+COMMON ISSUES & SOLUTIONS:
+--------------------------
+
+Issue: "File not found"
+Solution: Make sure all .tex files are in sections/ folder
+
+Issue: TOC not updated
+Solution: Run pdflatex twice
+
+Issue: Missing packages
+Solution: Install texlive-full (Linux) or MiKTeX (Windows)
+
+Issue: Images not showing
+Solution: Check images/ folder exists and image names are correct
+
+
+CLEANING UP:
+------------
+After compilation, you can delete auxiliary files:
+
+Windows:
+del *.aux *.log *.toc *.lof *.lot *.out *.synctex.gz
+
+Linux/Mac:
+rm *.aux *.log *.toc *.lof *.lot *.out *.synctex.gz
+
+
+FINAL OUTPUT:
+-------------
+main.pdf - Your complete report with:
+- Title page
+- Declaration & Certificate
+- Table of contents (clickable)
+- All 7 chapters
+- Professional formatting
+- Ready for submission
+
+
+NOTES:
+------
+- All content from report.txt has been converted to LaTeX
+- Figures/images need to be added separately (placeholders ready)
+- Bibliography can be added if needed
+- All sections are modular and can be edited independently
+
+
+Need help? Check README.md for detailed documentation.
+

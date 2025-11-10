@@ -1,0 +1,63 @@
+\chapter{Introduction}
+\label{ch:introduction}
+
+\section{Background and Significance}
+\label{sec:background}
+
+Urban traffic congestion poses a critical challenge in rapidly growing Indian cities like Mangalore, where mixed traffic conditions and ever-increasing vehicle ownership rates strain existing road infrastructure. Intersections serve as major potential bottlenecks, and inefficiencies in their operation often lead to increased travel delays, higher fuel consumption, elevated emission levels, and reduced safety for all road users. Conventional traffic signal plans, whether outdated or based on intuition rather than data, fail to cope with dynamically fluctuating demand patterns, resulting in unpredictable traffic flow and commuter frustration.
+
+This project addresses these concerns by introducing a systematic, data-driven methodology for optimizing signal timings at key urban intersections. By employing a combination of automated field data collection using YOLOv8 computer vision for vehicle detection and counting, standard engineering practices (Webster's method), and machine learning models (Linear Regression, Random Forest), the study generates precise signal plans tailored to real-world traffic conditions. The significance of this project lies not only in its immediate improvements—such as reduced vehicle delays and better intersection throughput—but also in its demonstration of how modern tools and best practices can be effectively adapted for Indian urban environments. The project offers a replicable and scalable model for other cities aiming to move from reactive to proactive, evidence-based traffic signal management, ultimately supporting safer, more efficient, and sustainable urban mobility.
+
+\section{Problem Statement}
+\label{sec:problem}
+
+Urban intersections in Mangalore consistently struggle with severe congestion, prolonged vehicle delays, and erratic traffic flow. These challenges are largely attributed to suboptimal signal timings and the reliance on manual signal control, which tends to be inconsistent and unable to adapt to real-time traffic fluctuations. Existing signal plans, where they exist, are often outdated and fail to reflect the evolving patterns of traffic demand, resulting in mixed and unpredictable vehicular movements.
+
+As a consequence, road users regularly experience poor intersection throughput, longer wait times, and increased frustration. These inefficiencies also contribute to higher emissions from idling vehicles, wasted fuel, and compromised safety for drivers, commuters, and pedestrians. The absence of a reliable, data-driven foundation for intersection management perpetuates these issues, making it difficult for local authorities to provide efficient and equitable urban mobility.
+
+\section{Main Objectives of the Project}
+\label{sec:main_objectives}
+
+\begin{enumerate}
+    \item Selection and classification of two critical urban intersections in Mangalore for detailed study (Jyoti Circle and Hampankatta Circle)
+    \item Comprehensive field data collection using video recording and automated YOLOv8-based vehicle detection and counting to capture accurate traffic volumes and movement patterns, converting detected vehicles into Passenger Car Units (PCUs)
+    \item Documentation of site conditions, traffic distribution, and congestion patterns during peak and off-peak hours
+    \item Application of standard traffic engineering formulas (Webster's method) to calculate optimal signal cycle lengths and green time allocations
+    \item Development and use of machine learning models (Linear Regression, Random Forest) trained on synthetic datasets with real-world traffic patterns to predict cycle times and validate results against conventional methods
+    \item Creation of realistic training datasets incorporating time-of-day effects, weather impacts, special events, and day-of-week patterns to enhance model robustness
+    \item Quantitative evaluation of intersection performance metrics including average vehicle delay and queue length
+    \item Validation of optimized signal timings using SUMO microsimulation to compare ML-based and Webster-based approaches under identical traffic conditions
+    \item Creation of detailed signal phasing diagrams and visualization charts to clearly present recommended timing strategies for each intersection
+    \item Systematic reporting of workflow, challenges encountered during fieldwork, and adaptive solutions implemented to ensure data integrity
+    \item Formulation of evidence-based recommendations for future signal upgrades and operational improvements at the studied locations
+\end{enumerate}
+
+\section{Scope and Limitations of the Project}
+\label{sec:scope_limitations}
+
+\subsection{Scope of the Project}
+
+The scope of this project encompasses the detailed study, analysis, and optimization of traffic signal timings at two critical urban intersections in Mangalore. It covers comprehensive field data collection using both manual counts and modern video analytics to accurately quantify traffic volumes and movement patterns. The project applies standard traffic engineering methodologies, such as Webster's formula, alongside machine learning models to design and recommend optimal signal cycles and green splits tailored to each site. Furthermore, it involves the creation of visualization tools—including signal phasing diagrams and charts—to clearly communicate proposed improvements. The project's recommendations are intended to serve as a replicable framework for similar intersections facing congestion issues and provide actionable insights for local authorities seeking effective, data-driven traffic management solutions.
+
+\subsection{Limitations of the Project}
+
+Several limitations constrain the outcomes of this project. The study is restricted to only two intersections within the city, which may limit the generalizability of the findings to all urban situations in Mangalore. Field data was collected over a limited time period and may not fully capture seasonal, weekly, or special-event fluctuations in traffic patterns. Equipment constraints, weather-related disruptions, and occasional manual measurement errors could also have influenced the accuracy of certain observations. Additionally, the scope for implementing and testing adaptive real-time signal control was limited due to resource and time constraints; as a result, recommendations are based on periodic data analysis rather than on dynamic, continuous traffic monitoring. External factors—such as pedestrian behavior, unauthorized street usage, and enforcement of traffic rules—were considered only to the extent observable during the field study, and may affect the practical impact of the proposed signal changes.
+
+\section{Research Methodology and Approach}
+\label{sec:methodology_approach}
+
+\begin{enumerate}
+    \item Selected two representative intersections in Mangalore: one signalized (Jyoti Circle), one manually controlled (KMC Hospital junction)
+    \item Conducted comprehensive field data collection using Insta360 camera video recordings during peak and off-peak periods
+    \item Developed and deployed YOLOv8-based automated vehicle detection system to process videos, identify vehicle classes, and calculate Passenger Car Units (PCUs) for each approach
+    \item Tabulated traffic volumes and movement patterns for all approaches to each intersection
+    \item Applied Webster's method (as per IRC:106-1990) to calculate optimum signal cycle length and allocate green times based on observed demand
+    \item Developed and used machine learning models (Linear Regression, Random Forest in Python) to predict cycle times and validate standard engineering outputs
+    \item Created optimized signal phasing diagrams and visualized results for recommended timing strategies
+    \item Documented practical fieldwork challenges and employed adaptive solutions to ensure accurate data collection and analysis
+    \item Ensured all design and calculation steps adhered to specifications outlined in IRC codes for signalized intersection design and operation
+    \item Prepared actionable recommendations and clear documentation for future intersection management and implementation by local authorities
+\end{enumerate}
+
+\newpage
+

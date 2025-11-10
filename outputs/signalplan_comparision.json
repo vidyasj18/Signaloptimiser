@@ -1,0 +1,70 @@
+{
+    "ml_plan": {
+      "NB": {
+        "delay": 18.790046012563025,
+        "queue_length": 13.26786026775978,
+        "throughput": 1068.0317890626177,
+        "LOS": "B",
+        "cycle_length": 60.054875407495544,
+        "effective_green": 17.81681000650002,
+        "arrival_flow_rate": 2542.0,
+        "saturation_flow_rate": 3600
+      },
+      "SB": {
+        "delay": 19.345042802187404,
+        "queue_length": 14.83119948167701,
+        "throughput": 1056.1083915380268,
+        "LOS": "B",
+        "cycle_length": 60.054875407495544,
+        "effective_green": 17.61790496406298,
+        "arrival_flow_rate": 2760.0,
+        "saturation_flow_rate": 3600
+      },
+      "WB": {
+        "delay": 22.27020435240062,
+        "queue_length": 9.279251813500258,
+        "throughput": 611.4021612027709,
+        "LOS": "C",
+        "cycle_length": 60.054875407495544,
+        "effective_green": 10.199355726362754,
+        "arrival_flow_rate": 1500.0,
+        "saturation_flow_rate": 3600
+      }
+    },
+    "webster_plan": {
+      "NB": {
+        "delay": 19.255536191179328,
+        "queue_length": 13.596548054993846,
+        "throughput": 1085.5243087071578,
+        "LOS": "B",
+        "cycle_length": 62.131065532766385,
+        "effective_green": 18.734661656026486,
+        "arrival_flow_rate": 2542.0,
+        "saturation_flow_rate": 3600
+      },
+      "SB": {
+        "delay": 18.76421086350565,
+        "queue_length": 14.385894995354333,
+        "throughput": 1178.6180535136725,
+        "LOS": "B",
+        "cycle_length": 62.131065532766385,
+        "effective_green": 20.34133208915543,
+        "arrival_flow_rate": 2760.0,
+        "saturation_flow_rate": 3600
+      },
+      "WB": {
+        "delay": 22.675169690168055,
+        "queue_length": 9.447987370903355,
+        "throughput": 640.553289953083,
+        "LOS": "C",
+        "cycle_length": 62.131065532766385,
+        "effective_green": 11.055071787584474,
+        "arrival_flow_rate": 1500.0,
+        "saturation_flow_rate": 3600
+      }
+    },
+    "summary": {
+      "ml_plan_file": "outputs/ml_signal_plan.json",
+      "webster_plan_file": "outputs/webster_signal_plan.json"
+    }
+  }

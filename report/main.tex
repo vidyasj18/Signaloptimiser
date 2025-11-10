@@ -1,0 +1,107 @@
+\documentclass[12pt,a4paper]{report}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage{fancyhdr}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{multirow}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    citecolor=blue,
+    pdftitle={Traffic Signal Timing Optimization},
+    pdfauthor={Bhuvan Dharwad, Bidisha Koley, Abhijith Sogal, Vidya S. J},
+    pdfsubject={Traffic Engineering},
+    pdfkeywords={Traffic Signal, Machine Learning, Webster Method, SUMO, Optimization}
+}
+
+% Line spacing
+\onehalfspacing
+
+% Header and Footer
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\leftmark}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Chapter and section formatting
+\titleformat{\chapter}[display]
+{\normalfont\huge\bfseries}{\chaptertitlename\ \thechapter}{20pt}{\Huge}
+\titlespacing*{\chapter}{0pt}{0pt}{20pt}
+
+% Code listing style
+\lstset{
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    showstringspaces=false,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    captionpos=b
+}
+
+% Graphics path
+\graphicspath{{images/}}
+
+% Document information
+\title{Traffic Signal Timing Optimization and Planning Recommendations for Urban Intersections}
+\author{
+    Bhuvan Dharwad (231CV214) \\
+    Bidisha Koley (231CV215) \\
+    Abhijith Sogal (231CV203) \\
+    Vidya S. J (231CV155)
+}
+\date{November 2025}
+
+\begin{document}
+
+% Title page and front matter
+\input{sections/titlepage}
+\input{sections/declaration}
+\input{sections/certificate}
+\input{sections/acknowledgement}
+
+% Table of contents with page numbers
+\tableofcontents
+\newpage
+\listoffigures
+\newpage
+\listoftables
+\newpage
+
+% Main content chapters
+\input{sections/abstract}
+\input{sections/introduction}
+\input{sections/methodology}
+\input{sections/irc_standards}
+\input{sections/ml_optimization}
+\input{sections/yolo_optimization}
+\input{sections/sumo_validation}
+\input{sections/conclusion}
+\input{sections/references}
+
+\end{document}
+

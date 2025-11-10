@@ -47,7 +47,7 @@ def webster_cycle_from_capacity(total_flow: float, capacity: float, lost_time: f
 
 def main() -> None:
     # Fallback PCU if JSON missing/empty (edit as needed)
-    fallback_pcu = {"N": 500.0, "S": 450.0, "E": 600.0, "W": 550.0}
+    fallback_pcu = {"N": 2542.0, "S": 2760.0, "E": 0.0, "W": 1500.0}
 
     pcu = load_pcu_from_summary()
     if not any(pcu.values()):
@@ -100,6 +100,32 @@ def main() -> None:
     for k in [x for x in ["NB","SB","EB","WB"] if x in sched]:
         g = sched[k]["green"]; a = sched[k]["amber"]; r = sched[k]["red"]
         print(f"{k}: green={g:.2f}, amber={a:.2f}, red={r:.2f}")
+
+    # Save JSON output for comparison script
+    output_data = {
+        "method": "Webster",
+        "cycle_length": cycle,
+        "approaches": {}
+    }
+    # Map approach codes and greens
+    approach_map = {"N": "NB", "S": "SB", "E": "EB", "W": "WB"}
+    greens_map = {"N": gN, "S": gS, "E": gE, "W": gW}
+    for appr_code, appr_name in approach_map.items():
+        if pcu.get(appr_code, 0.0) > 0:
+            output_data["approaches"][appr_name] = {
+                "effective_green": greens_map[appr_code],
+                "arrival_flow_rate": float(pcu.get(appr_code, 0.0)),  # PCU/hr
+                "saturation_flow_rate": DEFAULT_LANES * SAT_PER_LANE,  # PCU/hr
+                "green": sched[appr_name]["green"] if appr_name in sched else 0.0,
+                "amber": sched[appr_name]["amber"] if appr_name in sched else 0.0,
+                "red": sched[appr_name]["red"] if appr_name in sched else 0.0
+            }
+
+    os.makedirs('outputs', exist_ok=True)
+    output_path = 'outputs/webster_signal_plan.json'
+    with open(output_path, 'w', encoding='utf-8') as f:
+        json.dump(output_data, f, ensure_ascii=False, indent=2)
+    print(f"\n=== Saved Webster signal plan to {output_path} ===")
 
     # Phase sequence (textual):
     print("\n=== Phase sequence (exclusive, with all-red) ===")
