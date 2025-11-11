@@ -1,10 +1,10 @@
 {
-  "vehicle_count": 2044,
-  "avg_delay": 81.42416829745596,
-  "avg_waiting_time": 81.42416829745596,
-  "avg_travel_time": 157.7421722113503,
-  "avg_time_loss": 119.49638454011748,
-  "avg_depart_delay": 1255.2360273972602,
-  "total_delay": 166431.0,
-  "total_waiting_time": 166431.0
+  "vehicle_count": 284,
+  "avg_delay": 0.0035211267605633804,
+  "avg_waiting_time": 0.0035211267605633804,
+  "avg_travel_time": 57.62676056338028,
+  "avg_time_loss": 15.429190140845082,
+  "avg_depart_delay": 4.378521126760563,
+  "total_delay": 1.0,
+  "total_waiting_time": 1.0
 }

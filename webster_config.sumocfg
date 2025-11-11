@@ -1,2 +1,2 @@
 <?xml version='1.0' encoding='utf-8'?>
-<configuration><input><net-file value="sumo_network.net.xml" /><route-files value="routes.rou.xml" /><additional-files value="webster_traffic_lights.add.xml" /></input><time><begin value="0" /><end value="3600" /></time><output><summary-output value="sumo_output_Webster.xml" /><tripinfo-output value="tripinfo_Webster.xml" /></output></configuration>
+<configuration><input><net-file value="sumo_network.net.xml" /><route-files value="generated_routes.rou.xml" /><additional-files value="webster_traffic_lights.add.xml" /></input><time><begin value="0" /><end value="3600" /></time><output><summary-output value="sumo_output_Webster.xml" /><tripinfo-output value="tripinfo_Webster.xml" /></output></configuration>

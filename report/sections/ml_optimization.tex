@@ -4,30 +4,30 @@
 \section{Linear Regression}
 \label{sec:linear_regression}
 
-Linear regression is a statistical method that models the relationship between a dependent variable and one or more independent variables by fitting a linear equation to observed data. The model finds the best-fitting straight line (or hyperplane in multiple dimensions) through your data points. For simple linear regression with one predictor, this looks like: $y = mx + b$, where $m$ is the slope and $b$ is the y-intercept. The model minimizes the distance between predicted and actual values.
+Linear regression models how one quantity changes with another by fitting a straight line (or a hyperplane). In its simplest form: $y = mx + b$, with $m$ as slope and $b$ as intercept. The goal is to keep predictions close to actual values on average.
 
-Linear regression is a fundamental statistical modeling technique used in traffic optimization to establish predictive relationships between traffic variables and influencing factors. In traffic systems, it serves multiple critical functions including forecasting traffic volume based on temporal patterns such as time of day, day of week, weather conditions, and special events, which enables proactive signal timing adjustments and congestion management.
+It’s a solid baseline for traffic problems—useful for predicting volumes from time-of-day, day-of-week, or weather patterns, and for making quick, interpretable adjustments to timing plans.
 
 \section{Random Forests}
 \label{sec:random_forests}
 
-Random Forest is an ensemble machine learning algorithm that combines multiple decision trees to make more accurate and robust predictions through a ``wisdom of the crowds'' approach. The algorithm creates numerous decision trees during training, each built on a random subset of the data (bootstrap sampling) and considering only a random subset of features at each split. For predictions, it aggregates results from all trees - taking the majority vote for classification or the average for regression.
+Random Forest is an ensemble of decision trees—many simple models that vote together. Each tree sees a random slice of the data and features; the final prediction averages across them for stability.
 
-Random Forest is highly effective for traffic optimization due to its ability to capture complex, non-linear relationships between multiple traffic variables such as historical patterns, weather conditions, accidents, and real-time sensor data.
+It works well when relationships are messy or non-linear—think mixed vehicle classes, weather, incidents, and sensor noise.
 
 \section{Webster's Method}
 \label{sec:webster_method}
 
-The Webster method, also known as the Webster's method of apportionment or in traffic engineering as Webster's delay formula, is used to optimize traffic signal timing by minimizing average vehicle delay at intersections. In signal control, it calculates optimal cycle length based on traffic flows from different approaches, balancing the trade-off between minimizing stops and reducing overall waiting time to improve intersection efficiency and throughput.
+Webster’s method is a staple in traffic engineering for minimizing average delay at intersections. It calculates an optimal cycle length from flows on different approaches and balances the trade-off between stops and waiting time.
 
-In this project Webster method was used to train the Machine learning models so that we can optimize and predict the traffic values.
+Here, we used Webster both as the optimization baseline and as a “teacher” to help train ML models to predict feasible timings.
 
 \section{Data Source and Input}
 \label{sec:ml_data_source}
 
-The machine learning models receive their input data from the automated YOLOv8-based vehicle detection system developed in Stage 1 of the workflow. Traffic videos recorded at each intersection approach are processed through the Streamlit application, which uses YOLOv8 to detect and classify vehicles (cars, buses, two-wheelers, trucks), count them accurately using virtual stoplines and ROI masks, and convert the counts into Passenger Car Units (PCUs) using IRC standard conversion factors. 
+Inputs come from the automated YOLOv8-based detection pipeline. Videos from each approach are processed in the Streamlit app to detect and classify vehicles, count them with virtual stoplines and ROI masks, and convert counts to PCUs using IRC factors. 
 
-The output of this detection stage is saved as a JSON file (\texttt{intersection\_summary.json}) containing PCU values for each approach (N, S, E, W). This JSON file serves as the primary input to both the Webster-based calculations and the ML-based prediction models in Stage 2, ensuring consistent data input across all optimization methods and enabling fair comparison between traditional and machine learning approaches.
+The result is a JSON file (\texttt{intersection\_summary.json}) with PCUs for N, S, E, and W. That same file feeds both Webster calculations and ML models, keeping inputs consistent for fair comparison.
 
 \section{Traffic Signal Optimization Formulas}
 \label{sec:optimization_formulas}
@@ -50,15 +50,15 @@ Green Time Allocation & $G_a = \frac{y_a}{y} \times (C_o - L)$ & Allocates green
 \section{Data Set Used}
 \label{sec:dataset}
 
-While Webster's method provides a mathematically sound approach to signal timing, it assumes perfect, noise-free traffic counts. To create a more realistic and robust training dataset, we generated synthetic data using Webster's equations but incorporated real-world traffic patterns and variations that actual intersections experience.
+Webster’s method is mathematically sound, but it assumes clean counts. To make training more realistic, we generated synthetic data using Webster’s equations and layered in real-world patterns and variability seen at actual intersections.
 
 \subsection{Synthetic Dataset Generation with Real-World Patterns}
 
-A comprehensive synthetic dataset of 3000 samples was created, each representing a unique traffic scenario. Rather than generating uniform traffic patterns, the dataset incorporates six key real-world factors:
+We built a 3,000-sample synthetic dataset, each a unique scenario. Instead of uniform patterns, we varied six key factors:
 
 \subsubsection{Time-of-Day Effects}
 
-Traffic volumes vary significantly throughout the day. The dataset includes:
+Traffic varies by time of day. We included:
 \begin{itemize}
     \item Morning peak (7-9 AM): 1.4$\times$ traffic multiplier
     \item Evening peak (5-7 PM): 1.5$\times$ traffic multiplier
@@ -68,7 +68,7 @@ Traffic volumes vary significantly throughout the day. The dataset includes:
 
 \subsubsection{Weather Impact on Capacity}
 
-Adverse weather conditions reduce saturation flow rates and affect driver behavior:
+Weather affects capacity and behavior:
 \begin{itemize}
     \item Clear weather: 1.0$\times$ baseline capacity
     \item Rain: 0.85$\times$ capacity (reduced visibility, cautious driving)
@@ -79,7 +79,7 @@ Adverse weather conditions reduce saturation flow rates and affect driver behavi
 
 \subsubsection{Special Events}
 
-Random events (10\% probability) cause sudden traffic surges:
+Occasional events (10\% chance) create surges:
 \begin{itemize}
     \item Event occurrence: 1.3$\times$ traffic on affected approaches
     \item Directional bias: Events create asymmetric demand patterns
@@ -88,7 +88,7 @@ Random events (10\% probability) cause sudden traffic surges:
 
 \subsubsection{Day-of-Week Patterns}
 
-Traffic behavior differs between workdays and weekends:
+Weekdays vs weekends differ:
 \begin{itemize}
     \item Weekends: 0.8$\times$ traffic (reduced commuting)
     \item Weekdays: 1.0$\times$ traffic (regular commuting patterns)
@@ -96,7 +96,7 @@ Traffic behavior differs between workdays and weekends:
 
 \subsubsection{Directional Bias}
 
-Real intersections rarely have perfectly balanced traffic:
+Flows are rarely perfectly balanced:
 \begin{itemize}
     \item Random variations: -20\% to +30\% per approach
     \item Morning patterns: More inbound to city center
@@ -105,7 +105,7 @@ Real intersections rarely have perfectly balanced traffic:
 
 \subsubsection{Capacity Variations}
 
-Saturation flow rates vary based on intersection geometry and conditions:
+Capacity varies with geometry and conditions:
 \begin{itemize}
     \item Base saturation: 1800 PCU/hour per lane
     \item Weather-adjusted: Reduced based on conditions
@@ -118,7 +118,7 @@ Each training sample includes:
 
 \textbf{Input Features:}
 \begin{itemize}
-    \item N, S, E, W: PCU values for each approach (extracted from YOLOv8 automated vehicle detection in real-world application, or with real-world skew applied in synthetic training data)
+    \item N, S, E, W: PCU values for each approach (from YOLOv8 in real data, or with realistic skew in synthetic data)
     \item NS, EW: Combined directional flows
     \item hour: Time of day (0-23)
     \item weather indicators: Binary flags for different weather conditions
@@ -129,33 +129,33 @@ Each training sample includes:
 
 \textbf{Output Labels:}
 \begin{itemize}
-    \item cycle: Optimal cycle length (seconds) calculated with real-world adjustments
+    \item cycle: Optimal cycle length (seconds), adjusted with real-world factors
     \item $g_N, g_S, g_E, g_W$: Green times for each approach (seconds)
     \item total\_delay: Actual delay incorporating real-world factors
 \end{itemize}
 
 \subsection{Training Process}
 
-The synthetic dataset was generated using a two-step process:
+We generated the dataset using:
 \begin{enumerate}
     \item \textbf{Base Calculation:} Apply Webster's formulas to compute theoretical optimal timings
     \item \textbf{Real-World Adjustment:} Apply time-of-day, weather, event, and directional bias factors to create realistic variations
     \item \textbf{Delay Calculation:} Compute actual delays using adjusted capacity and flow values
 \end{enumerate}
 
-This approach ensures the ML models learn not just Webster's mathematical relationships, but also how to adapt to real-world conditions that Webster's formula doesn't account for. The dataset's compatibility with real-world sensor data makes it suitable for future retraining when actual intersection data becomes available.
+This way, models learn both Webster’s relationships and how to adapt when the real world deviates. Because the features align with field data, the models can be retrained later with actual intersection datasets.
 
 \section{Rationale for Integrating Machine Learning with Webster's Method}
 \label{sec:ml_webster_rationale}
 
 \subsection{Teacher-Student Approach}
 
-\textbf{Teacher (Webster):} We generate many synthetic traffic scenarios (N, S, E, W) and compute ``ideal'' labels using Webster's proportional splits and cycle formula. This encodes accepted traffic engineering behavior.
+\textbf{Teacher (Webster):} We generate many synthetic scenarios (N, S, E, W) and compute “ideal” labels via Webster’s cycle and proportional splits—encoding accepted engineering practice.
 
 \textbf{Student (ML):}
 \begin{itemize}
-    \item Linear Regression learns a simple mapping from (NS, EW) $\rightarrow$ cycle, close to Webster's relationship in the operating range.
-    \item RandomForest learns a robust mapping from (N, S, E, W) $\rightarrow$ ($g_N$, $g_S$, $g_E$, $g_W$), capturing mild nonlinearities and being resilient to noise.
+    \item Linear Regression learns a simple mapping (NS, EW) $\rightarrow$ cycle, close to Webster in the operating range.
+    \item RandomForest learns a robust mapping (N, S, E, W) $\rightarrow$ ($g_N$, $g_S$, $g_E$, $g_W$), capturing mild nonlinearities and resisting noise.
 \end{itemize}
 
 \subsection{Model Selection}
@@ -164,19 +164,19 @@ This approach ensures the ML models learn not just Webster's mathematical relati
 
 \textbf{Inputs:} (NS, EW) totals; \textbf{Output:} cycle length.
 
-\textbf{Rationale:} Webster's cycle is monotonic in the overall loading. A linear regressor provides an interpretable, low-variance fit that closely matches the synthetic Webster mapping while tolerating small measurement noise.
+\textbf{Rationale:} Webster’s cycle increases with overall loading. A linear regressor is interpretable, low variance, and matches the synthetic mapping while tolerating small noise.
 
-\textbf{Benefits:} Interpretable, fast, and sufficient because the mapping from aggregate load to cycle is close to linear in the operational range after clamping and capping $Y$.
+\textbf{Benefits:} Interpretable and fast; the aggregate-load-to-cycle mapping is close to linear in the operating range after clamping and capping $Y$.
 
 \subsubsection{Green Split Model -- RandomForestRegressor}
 
 \textbf{Inputs:} (N, S, E, W); \textbf{Output:} per-approach green seconds ($g_N$, $g_S$, $g_E$, $g_W$).
 
-\textbf{Rationale:} Splitting greens between approaches can have mild nonlinearities (e.g., diminishing returns, asymmetric sharing in noisy detections). A Random Forest captures interactions and outliers better than a pure linear rule, without heavy hyper-parameter tuning.
+\textbf{Rationale:} Green splits can be mildly non-linear (diminishing returns, asymmetric sharing with noisy detections). A Random Forest captures interactions and outliers better than a strict linear rule, without heavy tuning.
 
-\textbf{Training:} Synthetic ``teacher'' labels are generated by Webster proportional splits (data augmentation across a wide demand range). The forest is then normalized at inference so $\Sigma$ greens $\approx$ effective green ($C - L$), preserving feasibility.
+\textbf{Training:} Synthetic “teacher” labels come from Webster’s splits, augmented over wide demand ranges. At inference the forest is normalized so $\Sigma$ greens $\approx$ effective green ($C - L$), keeping plans feasible.
 
-\textbf{Benefits:} Robust to jitter/outliers in detections, handles asymmetric loads gracefully, and remains stable under noise; easy to retrain if you collect local data.
+\textbf{Benefits:} Robust to jitter and outliers, handles asymmetric loads gracefully, stays stable under noise, and is easy to retrain with local data.
 
 \newpage
 

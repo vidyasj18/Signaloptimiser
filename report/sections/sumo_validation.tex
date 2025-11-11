@@ -4,11 +4,11 @@
 \section{Introduction to SUMO}
 \label{sec:sumo_intro}
 
-SUMO (Simulation of Urban MObility) is an open-source, microscopic traffic simulation package designed to handle large road networks. It provides a realistic environment for testing traffic signal timing plans by simulating individual vehicle movements, interactions, and behaviors. SUMO's microscopic simulation approach allows for detailed analysis of intersection performance metrics that cannot be captured through analytical formulas alone.
+SUMO (Simulation of Urban MObility) is an open-source microscopic traffic simulator built for large networks. It lets us test signal plans in a realistic setting by simulating individual vehicles, their interactions, and behavior. Because it’s microscopic, we can measure intersection performance in ways that simple formulas can’t.
 
 \subsection{Why SUMO Validation}
 
-Analytical methods like Webster's formula provide theoretical optima under idealized conditions, but real-world traffic involves complex interactions, queuing dynamics, and stochastic arrival patterns. SUMO validation ensures that optimized signal timings perform well in realistic scenarios with:
+Analytical methods like Webster’s formula give clean answers under ideal assumptions, but real traffic isn’t ideal—there are interactions, queues, and randomness. SUMO helps check whether optimized timings still hold up when those realities show up:
 \begin{itemize}
     \item Vehicle-to-vehicle interactions
     \item Queue formation and dissipation
@@ -20,11 +20,11 @@ Analytical methods like Webster's formula provide theoretical optima under ideal
 \section{SUMO Network Generation}
 \label{sec:sumo_network}
 
-The SUMO simulation framework requires a complete network definition including nodes, edges, lanes, and connections. Our system dynamically generates networks based on the intersection type detected from signal plans.
+SUMO needs a complete network: nodes, edges, lanes, connections. We generate these dynamically based on the intersection type detected from the signal plan.
 
 \subsection{Dynamic Intersection Detection}
 
-The system automatically detects whether an intersection is 3-way (T-junction) or 4-way (crossroads) by analyzing which approaches have non-zero green times in the signal plans. This detection enables appropriate network generation without manual configuration.
+We infer whether a site is 3-way (T-junction) or 4-way (crossroads) by checking which approaches have non-zero greens in the plan—no manual setup needed.
 
 \subsection{Network File Creation}
 
@@ -53,7 +53,7 @@ Defines incoming and outgoing edges for each approach:
 
 \subsubsection{Network Compilation}
 
-Uses SUMO's \texttt{netconvert} tool to combine .nod and .edg files into a complete network (.net.xml). Netconvert automatically generates:
+We use SUMO’s \texttt{netconvert} to combine .nod and .edg into a complete network (.net.xml). It automatically generates:
 \begin{itemize}
     \item Internal lanes for turning movements
     \item Connection definitions between lanes
@@ -64,11 +64,11 @@ Uses SUMO's \texttt{netconvert} tool to combine .nod and .edg files into a compl
 \section{Traffic Light Program Generation}
 \label{sec:traffic_light_generation}
 
-Converting signal timing plans into SUMO-compatible traffic light programs requires careful mapping of phase states to network connections.
+To convert plans into SUMO traffic lights, phase states must line up with the actual network connections.
 
 \subsection{Phase State String Construction}
 
-SUMO requires phase state strings where each character represents one connection at the intersection, not just lanes. The system:
+In SUMO, each character in a phase string maps to a connection (not just lanes). The system:
 \begin{itemize}
     \item Reads actual connections from the generated network file
     \item Determines connection order based on linkIndex values
@@ -78,7 +78,7 @@ SUMO requires phase state strings where each character represents one connection
 
 \subsection{Phase Sequence}
 
-For a typical 3-way or 4-way intersection, the traffic light program includes:
+For typical 3-way and 4-way intersections, the program includes:
 \begin{enumerate}
     \item \textbf{Phase 1:} NS Green - North and South approaches receive green signal
     \item \textbf{Phase 2:} NS Yellow - Transition period for NS approaches
@@ -90,7 +90,7 @@ For a typical 3-way or 4-way intersection, the traffic light program includes:
 
 \subsection{Timing Conversion}
 
-Signal plan timings are converted to SUMO phases:
+We map signal timings to SUMO phases:
 \begin{itemize}
     \item Green times: Directly mapped from signal plan
     \item Amber times: Fixed at 3 seconds (standard practice)

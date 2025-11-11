@@ -1,17 +1,17 @@
 \chapter{Conclusion}
 \label{ch:conclusion}
 
-This Mini Project successfully developed a data-driven framework to optimize traffic signal timing at urban intersections, integrating classical traffic engineering with modern computational techniques. Using YOLOv8 for automated vehicle detection and PCU estimation combined with Webster's Method and SUMO microsimulation validation, the system effectively calculates optimal cycle lengths and green time splits.
+This mini project built a practical, data-driven framework to optimize traffic signal timings at urban intersections—bringing classical traffic engineering together with modern tools. With YOLOv8 for automated detection and PCU estimation, Webster’s method for timing, and SUMO for validation, the system computes cycle lengths and green splits that work in the real world.
 
-The project's key innovation lies in creating an integrated Streamlit web application that combines YOLO-based vehicle detection, Webster signal timing optimization, and SUMO simulation validation in a single, user-friendly workflow. This approach makes traffic signal optimization accessible to engineers and planners without requiring extensive programming knowledge or command-line expertise.
+A key contribution is the integrated Streamlit app that combines YOLO-based detection, Webster timing, and SUMO validation in one workflow. That makes optimization accessible to engineers and planners without needing heavy programming or command-line tools.
 
-Validation through case studies at Jyoti Circle (3-way T-junction) and Hampankatta Circle (4-way intersection) demonstrated the system's adaptability by adjusting signal phases to prioritize heavy or unbalanced traffic flows. The system dynamically generates appropriate networks and routing logic for different intersection types, proving its versatility.
+Case studies at Jyoti Circle (3-way T) and Hampankatta Circle (4-way) showed the system adapting to unbalanced and heavy flows, prioritizing where it matters. It dynamically generates networks and routing logic for each geometry, which makes it versatile.
 
-Most importantly, SUMO microsimulation validation provided objective evidence of the Webster-based approach's effectiveness. The simulation accounts for vehicle interactions, queuing dynamics, and stochastic arrival patterns that analytical formulas cannot capture, providing detailed performance metrics including average delay, waiting time, travel time, and throughput.
+Most importantly, SUMO microsimulation provided objective evidence for the approach. By accounting for interactions, queues, and randomness that formulas miss, it yields detailed metrics like average delay, waiting time, travel time, and throughput.
 
-The project also produced comprehensive outputs including signal phasing diagrams, SUMO network files, traffic light programs, and detailed performance metrics. These outputs provide city engineers and planners with actionable, validated recommendations for signal timing optimization.
+We also produced practical outputs—phasing diagrams, SUMO network files, traffic light programs, and metrics—so city teams have actionable, validated recommendations.
 
-By integrating YOLO-based vehicle detection, Webster formula-based timing optimization, and SUMO simulation validation through a Streamlit web application, this work establishes a robust foundation for intelligent traffic signal control systems. The framework is designed to work with real-world traffic data, enabling practical deployment with actual intersection measurements. This project marks an important step towards intelligent transportation systems that combine theoretical rigor with practical accessibility, ultimately supporting safer, more efficient, and sustainable urban mobility.
+Bringing YOLO detection, Webster timing, and SUMO validation together in a user-friendly app lays a strong foundation for intelligent signal control. The framework is built for real data and real deployment. It’s a small but meaningful step toward systems that blend rigor with day-to-day practicality—supporting safer, smoother, and more sustainable urban mobility.
 
 \section{Key Achievements}
 \label{sec:achievements}

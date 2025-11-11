@@ -779,7 +779,7 @@ def main():
                 if use_stopline:
                     (axp, ayp), (bxp, byp) = stopline_coords
                     cv2.line(preview, (int(axp), int(ayp)), (int(bxp), int(byp)), (0, 165, 255), 3)
-                st.image(cv2.cvtColor(preview, cv2.COLOR_BGR2RGB), caption="First frame with stopline/mask", use_container_width=True)
+                st.image(cv2.cvtColor(preview, cv2.COLOR_BGR2RGB), caption="First frame with stopline/mask", width='stretch')
 
         if st.button("🚀 Process Video", type="primary"):
             with st.spinner("Processing video... This may take a while depending on video length."):
@@ -856,7 +856,7 @@ def main():
                         }
                         for vehicle_type, count in vehicle_counts.items()
                     ])
-                    st.dataframe(count_df, use_container_width=True)
+                    st.dataframe(count_df, width='stretch')
                     
                     # Bar chart
                     fig = px.bar(
@@ -866,7 +866,7 @@ def main():
                         title='Vehicle Counts by Type',
                         color='Vehicle Type'
                     )
-                    st.plotly_chart(fig, use_container_width=True, key="main_bar_chart")
+                    st.plotly_chart(fig, width='stretch', key="main_bar_chart")
                 else:
                     st.warning("No vehicles detected in the video.")
                 
@@ -895,7 +895,7 @@ def main():
                             yaxis_title='Vehicle Count',
                             hovermode='x unified'
                         )
-                        st.plotly_chart(fig, use_container_width=True, key="main_time_series")
+                        st.plotly_chart(fig, width='stretch', key="main_time_series")
                 
                 # Annotated video section
                 if results.get('annotated_video_path') and os.path.exists(results['annotated_video_path']):
@@ -1112,21 +1112,39 @@ def main():
                 st.success(f"✅ Webster plan generated! Cycle length: {plan['cycle_length']:.2f} s. See summary below.")
 
         if adaptive_state["plan"]:
-            if st.button("🚦 Run SUMO Simulation", type="primary", key="btn_run_sumo"):
-                with st.spinner("Running SUMO simulation (Webster plan)..."):
-                    sumo_results = sumo_simulation.run_webster_pipeline(
-                        pcu_override=adaptive_state["pcu_totals"],
-                        run_sumo=True,
-                        use_gui=False,
-                    )
-                adaptive_state["sumo"] = sumo_results
-                st.session_state.adaptive_state = adaptive_state
-                if not sumo_results["sumo_available"]:
-                    st.warning("SUMO libraries not available; generated network/config files for manual execution.")
-                elif not sumo_results["sumo_success"]:
-                    st.error("SUMO simulation failed. Check console logs for details.")
-                else:
-                    st.success("SUMO simulation complete.")
+            col_cli, col_gui = st.columns(2)
+            with col_cli:
+                if st.button("🚦 Run SUMO (no GUI)", type="primary", key="btn_run_sumo_cli"):
+                    with st.spinner("Running SUMO simulation (no GUI)..."):
+                        sumo_results = sumo_simulation.run_webster_pipeline(
+                            pcu_override=adaptive_state["pcu_totals"],
+                            run_sumo=True,
+                            use_gui=False,
+                        )
+                    adaptive_state["sumo"] = sumo_results
+                    st.session_state.adaptive_state = adaptive_state
+                    if not sumo_results["sumo_available"]:
+                        st.warning("SUMO libraries not available; generated network/config files for manual execution.")
+                    elif not sumo_results["sumo_success"]:
+                        st.error("SUMO simulation failed. Check console logs for details.")
+                    else:
+                        st.success("SUMO simulation complete.")
+            with col_gui:
+                if st.button("🖥️ Run SUMO (open GUI)", type="secondary", key="btn_run_sumo_gui"):
+                    with st.spinner("Launching SUMO-GUI..."):
+                        sumo_results = sumo_simulation.run_webster_pipeline(
+                            pcu_override=adaptive_state["pcu_totals"],
+                            run_sumo=True,
+                            use_gui=True,
+                        )
+                    adaptive_state["sumo"] = sumo_results
+                    st.session_state.adaptive_state = adaptive_state
+                    if not sumo_results["sumo_available"]:
+                        st.warning("SUMO libraries not available; generated network/config files for manual execution.")
+                    elif not sumo_results["sumo_success"]:
+                        st.error("SUMO-GUI failed to launch. Check console logs for details.")
+                    else:
+                        st.success("SUMO-GUI launched.")
         
         # Consolidated Summary Section - Show all results in one place
         if adaptive_state.get("pcu_totals") or adaptive_state.get("plan") or adaptive_state.get("sumo"):
@@ -1155,7 +1173,7 @@ def main():
                                 "Vehicle Counts": str(data.get('vehicle_counts', {}))
                             })
                         if pcu_rows:
-                            st.dataframe(pd.DataFrame(pcu_rows), use_container_width=True, hide_index=True)
+                            st.dataframe(pd.DataFrame(pcu_rows), width='stretch', hide_index=True)
             
             # Webster Plan Section
             if adaptive_state.get("plan"):
@@ -1183,12 +1201,12 @@ def main():
                             "Arrival Flow (PCU/hr)": f"{data.get('arrival_flow_rate', 0.0):.2f}"
                         })
                     if timing_rows:
-                        st.dataframe(pd.DataFrame(timing_rows), use_container_width=True, hide_index=True)
+                        st.dataframe(pd.DataFrame(timing_rows), width='stretch', hide_index=True)
                 
                 # Phase diagram
                 try:
                     phase_fig = webster.create_phase_diagram(plan)
-                    st.plotly_chart(phase_fig, use_container_width=True)
+                    st.plotly_chart(phase_fig, width='stretch')
                 except Exception as exc:
                     st.warning(f"Could not render phase diagram: {exc}")
             
@@ -1238,7 +1256,7 @@ def main():
                         {"Metric": "Total Waiting Time (s)", "Value": f"{metrics.get('total_waiting_time', 0.0):.2f}"},
                         {"Metric": "Throughput (veh/hr)", "Value": f"{throughput:.2f}"},
                     ])
-                    st.dataframe(metrics_df, use_container_width=True, hide_index=True)
+                    st.dataframe(metrics_df, width='stretch', hide_index=True)
                 
                 # Show additional info
                 sumo_results = adaptive_state.get("sumo", {})
@@ -1363,7 +1381,7 @@ def main():
                 }
                 for vehicle_type, count in vehicle_counts.items()
             ])
-            st.dataframe(count_df, use_container_width=True)
+            st.dataframe(count_df, width='stretch')
             
             # Bar chart
             fig = px.bar(
@@ -1373,7 +1391,7 @@ def main():
                 title='Vehicle Counts by Type',
                 color='Vehicle Type'
             )
-            st.plotly_chart(fig, use_container_width=True, key="session_bar_chart")
+            st.plotly_chart(fig, width='stretch', key="session_bar_chart")
         
         # Frame-by-frame analysis
         if results['frame_data']:
@@ -1400,7 +1418,7 @@ def main():
                     yaxis_title='Vehicle Count',
                     hovermode='x unified'
                 )
-                st.plotly_chart(fig, use_container_width=True, key="session_time_series")
+                st.plotly_chart(fig, width='stretch', key="session_time_series")
         
         # Annotated video section
         if st.session_state.annotated_video_path and os.path.exists(st.session_state.annotated_video_path):

@@ -4,60 +4,60 @@
 \section{Objective Definition}
 \label{sec:objective_definition}
 
-The primary goal of this project is to develop a data-driven, automated framework for optimizing traffic signal timings at urban intersections. The specific objectives are as follows:
+The aim here is straightforward: build a data-driven, largely automated framework to optimize signal timings at urban intersections. Specifically, we set out to:
 
 \begin{itemize}
-    \item \textbf{Data Collection \& Intersection Selection:} To identify and select representative signalized and non-signalized intersections in an urban setting (Mangalore) for a comparative case study, ensuring feasibility for field data collection.
+    \item \textbf{Data Collection \& Intersection Selection:} Identify representative signalized and non-signalized intersections in Mangalore for a comparative case study, with practical field-feasibility in mind.
     
-    \item \textbf{Automated Traffic Analysis:} To design and implement a computer vision-based system using YOLO object detection to automatically count vehicles and convert them into Passenger Car Units (PCU) from recorded traffic video feeds.
+    \item \textbf{Automated Traffic Analysis:} Build a computer vision pipeline using YOLO to automatically count vehicles from recorded video and convert them to Passenger Car Units (PCU).
     
-    \item \textbf{Signal Timing Optimization:} To develop a computational model that utilizes the extracted PCU data to calculate optimal signal cycle lengths and green time splits for each approach of an intersection, primarily based on Webster's method.
+    \item \textbf{Signal Timing Optimization:} Use the extracted PCUs to compute cycle length and green splits for each approach, primarily via Webster’s method.
     
-    \item \textbf{Validation \& Visualization:} To validate the optimized signal timings by computing performance metrics like average vehicle delay and to generate intuitive phase diagrams for clear visualization of the proposed signal cycle.
+    \item \textbf{Validation \& Visualization:} Validate results with clear metrics (e.g., delay) and produce intuitive phase diagrams to explain the recommended cycle.
 \end{itemize}
 
 \section{Selection of Study Intersections}
 \label{sec:intersection_selection}
 
-The project began with identifying suitable intersections within Mangalore city for signal optimization. Potential sites were shortlisted using Google Maps, Google Earth, and field reconnaissance visits. Selection was based on traffic density, presence or absence of signals, feasibility of camera placement, and safety for manual observation.
+We started by shortlisting intersections in Mangalore using Google Maps/Earth and field visits. We looked for a mix of traffic density, presence/absence of signals, and places where cameras could be set up safely and effectively.
 
 Two intersections were finalized:
 \begin{itemize}
     \item \textbf{Jyoti Circle} -- A busy three-arm junction, manually controlled by traffic police.
-    \item \textbf{Hampankatta Circle} -- A four-arm intersection with non-functional signals and movement restrictions via barricades.
+    \item \textbf{Hampankatta Circle} -- A four-arm intersection with non-functional signals and some movements restricted by barricades.
 \end{itemize}
 
-These intersections were approved as practical and representative study locations.
+These locations are both practical to study and representative of common urban conditions.
 
 \section{Field Data Collection}
 \label{sec:field_data}
 
 \subsection{Initial Plan}
-The team initially planned to deploy multiple cameras on tripods to capture traffic movements in each leg of both intersections.
+We first planned to deploy multiple tripod-mounted cameras to cover each leg of both intersections.
 
 \subsection{Challenges Faced}
-Field data collection was affected by:
+Fieldwork rarely goes exactly to plan. In our case:
 \begin{itemize}
     \item Continuous heavy rainfall
     \item Limited availability of tripods
 \end{itemize}
 
 \subsection{Revised Data Collection Setup}
-To overcome these challenges, a 360° Insta360 camera was used for each intersection. This single-device approach allowed:
+To work around this, we used a single 360° Insta360 camera per site. That gave us:
 \begin{itemize}
     \item Complete intersection coverage
     \item Reduced manpower
     \item Lower risk of missing turning movements
 \end{itemize}
 
-Each intersection was recorded for 30 minutes, and the videos were processed for further traffic analysis.
+Each intersection was recorded for 30 minutes and the footage processed for analysis.
 
 \section{Development of Analytical Framework in Python}
 \label{sec:python_framework}
 
 \subsection{Streamlit Web Application Development}
 
-A comprehensive Streamlit web application was developed to provide an integrated workflow for traffic signal optimization. The application performs:
+We built a Streamlit web app to tie the full workflow together. It:
 \begin{itemize}
     \item Vehicle detection and PCU calculation using YOLOv8
     \item Optimum cycle time calculation using Webster's Method
@@ -66,7 +66,7 @@ A comprehensive Streamlit web application was developed to provide an integrated
     \item SUMO simulation execution and metrics extraction
 \end{itemize}
 
-The application provides a user-friendly interface that eliminates the need for command-line operations, making traffic signal optimization accessible to engineers and planners without extensive programming knowledge.
+The interface avoids command-line steps and makes the process approachable for engineers and planners.
 
 \section{YOLO-Based Vehicle Detection and PCU Estimation}
 \label{sec:yolo_detection}
@@ -75,7 +75,7 @@ A two-stage computational system was built for vehicle detection and signal opti
 
 \subsection{Stage 1: Streamlit-YOLO Application}
 
-A custom Streamlit application was developed where users upload traffic videos from each approach. The app performs:
+Users upload traffic videos from each approach via the Streamlit app. The app:
 \begin{itemize}
     \item Vehicle detection using YOLOv8
     \item Tracking of inbound vehicles using ROI masks
@@ -83,11 +83,11 @@ A custom Streamlit application was developed where users upload traffic videos f
     \item Export of PCU values into a unified JSON file
 \end{itemize}
 
-This forms the core input for signal timing calculations.
+This JSON output feeds the signal timing calculations.
 
 \subsection{Stage 2: Signal Timing and Phase Diagram Generator}
 
-The Streamlit application integrates Webster signal timing calculation directly into the workflow:
+Signal timing is computed directly in the app:
 \begin{itemize}
     \item Reads PCU data from the JSON output
     \item Computes optimum cycle time using Webster's method
@@ -96,16 +96,16 @@ The Streamlit application integrates Webster signal timing calculation directly 
     \item Validates proportional green allocation based on actual demand
 \end{itemize}
 
-The phase diagram clearly shows the sequence and duration of green, amber, and red phases for each approach, ensuring that NS and EW phases never overlap (only one phase group is green at a time).
+The phase diagram shows the sequence and duration of green, amber, and red, ensuring NS and EW groups never overlap.
 
 \section{Case Study Analysis for Selected Intersections}
 \label{sec:case_study}
 
-The system demonstrates dynamic adaptation to different intersection types, automatically detecting whether an intersection is 3-way (T-junction) or 4-way (crossroads) based on the approaches present in the signal plans. This capability enables appropriate network generation, routing logic, and signal timing optimization for each intersection type.
+The system adapts to different intersection types by detecting whether a site is 3-way (T-junction) or 4-way (crossroads). It then generates the right network, routing logic, and timing approach for that geometry.
 
 \subsection{Jyoti Circle (3-Arm T-Junction)}
 
-The total PCU was around 6,802, with highly unbalanced demand (dominant NS flow). The system automatically detected this as a 3-way intersection (missing East approach) and:
+Total PCU was about 6,802 with a strongly dominant NS flow. The system detected a 3-way layout (no East approach) and:
 \begin{itemize}
     \item Generated appropriate T-junction network with only NB, SB, and WB approaches
     \item Applied T-junction routing logic (no through movements where not applicable)
@@ -113,11 +113,11 @@ The total PCU was around 6,802, with highly unbalanced demand (dominant NS flow)
     \item Allocated green split skewed toward the dominant direction (NS $\approx$ 36.5 s vs W $\approx$ 9.8 s)
 \end{itemize}
 
-The dynamic network generation created 4 nodes, 6 edges, and 7 connections appropriate for a T-junction geometry.
+Dynamic network generation resulted in 4 nodes, 6 edges, and 7 connections for the T-junction geometry.
 
 \subsection{Hampankatta Circle (4-Arm Intersection)}
 
-Total PCU reached 10,680, with heavy bus traffic. The system detected this as a 4-way intersection and:
+Total PCU reached 10,680 with heavy bus traffic. The system detected a 4-way intersection and:
 \begin{itemize}
     \item Generated complete 4-way network with all approaches (NB, SB, EB, WB)
     \item Applied standard routing logic with through movements available
@@ -125,14 +125,14 @@ Total PCU reached 10,680, with heavy bus traffic. The system detected this as a 
     \item Allocated balanced green splits according to proportional PCU distribution
 \end{itemize}
 
-The network generation created appropriate geometry for a full crossroads intersection.
+The generated network reflected a full crossroads geometry.
 
-Both cases validated the model's ability to adapt to demand and intersection configuration, demonstrating that the system works seamlessly for both 3-way and 4-way intersections without manual configuration.
+Both cases show the model adapting to demand and geometry without manual configuration.
 
 \section{Validation and Interpretation}
 \label{sec:validation}
 
-Signal timing calculations were cross-verified against:
+We cross-verified signal timing calculations against:
 \begin{itemize}
     \item Webster's analytical cycle time formula
     \item Phase-wise saturation flow considerations
@@ -140,7 +140,7 @@ Signal timing calculations were cross-verified against:
     \item IRC:106-1990 standards for signalized intersections
 \end{itemize}
 
-The Webster-based signal plans were validated through SUMO (Simulation of Urban MObility) microsimulation. The SUMO validation process involved:
+We then validated plans in SUMO microsimulation:
 \begin{itemize}
     \item Dynamic network generation for 3-way and 4-way intersections based on detected approaches
     \item Traffic light program creation from Webster signal timing plans
@@ -149,7 +149,7 @@ The Webster-based signal plans were validated through SUMO (Simulation of Urban 
     \item Extracting performance metrics including average delay, waiting time, travel time, throughput, and time loss
 \end{itemize}
 
-SUMO simulation results provide detailed performance metrics that validate the effectiveness of the Webster-based signal timing optimization:
+The simulation provided detailed metrics supporting the Webster-based plans:
 \begin{itemize}
     \item Average vehicle delay per vehicle
     \item Average waiting time at intersections
@@ -158,7 +158,7 @@ SUMO simulation results provide detailed performance metrics that validate the e
     \item Total time loss compared to free-flow conditions
 \end{itemize}
 
-This microsimulation validation provides concrete evidence that the Webster-based signal optimization framework produces effective signal timing plans validated in realistic traffic scenarios.
+In short, the microsimulation backs up the effectiveness of the optimized timings under realistic conditions.
 
 \newpage
 

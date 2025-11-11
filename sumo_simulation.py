@@ -157,7 +157,7 @@ def create_sumo_network_files(signal_plans: List[Dict] = None):
             edge_in.set('from', nodes['from'])
             edge_in.set('to', nodes['to'])
             edge_in.set('priority', '13')
-            edge_in.set('numLanes', '1')
+            edge_in.set('numLanes', '3')
             edge_in.set('speed', '13.89')
             
             # Outgoing edge
@@ -166,7 +166,7 @@ def create_sumo_network_files(signal_plans: List[Dict] = None):
             edge_out.set('from', nodes['to'])
             edge_out.set('to', nodes['out'])
             edge_out.set('priority', '13')
-            edge_out.set('numLanes', '1')
+            edge_out.set('numLanes', '3')
             edge_out.set('speed', '13.89')
     
     # Write .edg file
@@ -198,7 +198,8 @@ def create_sumo_network(signal_plans: List[Dict] = None, output_path: str = 'sum
             '--node-files=intersection.nod.xml',
             '--edge-files=intersection.edg.xml',
             '--output-file=' + output_path,
-            '--no-turnarounds'
+            '--no-turnarounds',
+            '--lefthand'  # India: left-hand traffic geometry and priorities
         ]
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
         if result.returncode == 0:
@@ -447,43 +448,77 @@ def create_traffic_lights(signal_plan: Dict, output_path: str, plan_name: str, n
     
     y_ew = eb.get('amber', 3.0) if 'EB' in present else (wb.get('amber', 3.0) if 'WB' in present else 3.0)
     
-    # Build phase state string based on connection order from network
-    def get_state_by_connections(nb_state, sb_state, eb_state, wb_state):
-        """Build state string matching the connection order from network file"""
-        if not connections:
-            # Fallback: use lane-based (simplified, may not work)
-            present_approaches = []
-            for appr_id in ['NB', 'SB', 'EB', 'WB']:
-                if appr_id in signal_plan.get('approaches', {}):
-                    if signal_plan['approaches'][appr_id].get('green', 0) > 0:
-                        present_approaches.append(appr_id)
-            # Return state for each approach (simplified)
-            state = ''
-            for appr in present_approaches:
-                if appr == 'NB':
-                    state += nb_state
-                elif appr == 'SB':
-                    state += sb_state
-                elif appr == 'EB':
-                    state += eb_state
-                elif appr == 'WB':
-                    state += wb_state
-            return state
-        
+    # Helpers to classify L/T/R for left-hand traffic
+    def classify_movement(from_edge: str, to_edge: str) -> str:
+        fm = 'NB' if from_edge.startswith('NB') else 'SB' if from_edge.startswith('SB') else 'EB' if from_edge.startswith('EB') else 'WB' if from_edge.startswith('WB') else ''
+        to = 'NB' if to_edge.startswith('NB') else 'SB' if to_edge.startswith('SB') else 'EB' if to_edge.startswith('EB') else 'WB' if to_edge.startswith('WB') else ''
+        # Canonical mapping for left-hand traffic
+        mapping = {
+            'NB': {'L': 'WB', 'T': 'SB', 'R': 'EB'},
+            'SB': {'L': 'EB', 'T': 'NB', 'R': 'WB'},
+            'EB': {'L': 'NB', 'T': 'WB', 'R': 'SB'},
+            'WB': {'L': 'SB', 'T': 'EB', 'R': 'NB'},
+        }
+        if fm in mapping:
+            for mv, dest in mapping[fm].items():
+                if to == dest:
+                    return mv  # 'L', 'T', or 'R'
+        return ''  # unknown
+
+    def build_state_ns_green() -> str:
+        # NB/SB: T,R => 'G'; L => 'g'; EB/WB => 'r'
         state = ''
         for conn in connections:
-            from_edge = conn['from']
-            # Determine which approach this connection belongs to
-            if from_edge.startswith('NB'):
-                state += nb_state
-            elif from_edge.startswith('SB'):
-                state += sb_state
-            elif from_edge.startswith('EB'):
-                state += eb_state
-            elif from_edge.startswith('WB'):
-                state += wb_state
+            from_edge = conn['from']; to_edge = conn['to']
+            if from_edge.startswith('NB') or from_edge.startswith('SB'):
+                mv = classify_movement(from_edge, to_edge)
+                state += 'g' if mv == 'L' else 'G'
+            elif from_edge.startswith('EB') or from_edge.startswith('WB'):
+                state += 'r'
             else:
-                state += 'r'  # Default to red if unknown
+                state += 'r'
+        return state
+
+    def build_state_ns_yellow() -> str:
+        # NB/SB: T,R => 'y'; L => 'g' (left remains permissive); EB/WB => 'r'
+        state = ''
+        for conn in connections:
+            from_edge = conn['from']; to_edge = conn['to']
+            if from_edge.startswith('NB') or from_edge.startswith('SB'):
+                mv = classify_movement(from_edge, to_edge)
+                state += 'g' if mv == 'L' else 'y'
+            elif from_edge.startswith('EB') or from_edge.startswith('WB'):
+                state += 'r'
+            else:
+                state += 'r'
+        return state
+
+    def build_state_ew_green() -> str:
+        # EB/WB: T,R => 'G'; L => 'g'; NB/SB => 'r'
+        state = ''
+        for conn in connections:
+            from_edge = conn['from']; to_edge = conn['to']
+            if from_edge.startswith('EB') or from_edge.startswith('WB'):
+                mv = classify_movement(from_edge, to_edge)
+                state += 'g' if mv == 'L' else 'G'
+            elif from_edge.startswith('NB') or from_edge.startswith('SB'):
+                state += 'r'
+            else:
+                state += 'r'
+        return state
+
+    def build_state_ew_yellow() -> str:
+        # EB/WB: T,R => 'y'; L => 'g'; NB/SB => 'r'
+        state = ''
+        for conn in connections:
+            from_edge = conn['from']; to_edge = conn['to']
+            if from_edge.startswith('EB') or from_edge.startswith('WB'):
+                mv = classify_movement(from_edge, to_edge)
+                state += 'g' if mv == 'L' else 'y'
+            elif from_edge.startswith('NB') or from_edge.startswith('SB'):
+                state += 'r'
+            else:
+                state += 'r'
         return state
     
     phases = []
@@ -493,7 +528,7 @@ def create_traffic_lights(signal_plan: Dict, output_path: str, plan_name: str, n
     if g_ns > 0:
         phase1 = ET.SubElement(tl_logic, 'phase')
         phase1.set('duration', str(int(round(g_ns))))
-        state1 = get_state_by_connections('G', 'G', 'r', 'r')  # NS green, EW red
+        state1 = build_state_ns_green()
         phase1.set('state', state1)
         phases.append(('NS Green', g_ns, state1))
         total_phase_time += g_ns
@@ -502,7 +537,7 @@ def create_traffic_lights(signal_plan: Dict, output_path: str, plan_name: str, n
     if y_ns > 0 and g_ns > 0:
         phase2 = ET.SubElement(tl_logic, 'phase')
         phase2.set('duration', str(int(round(y_ns))))
-        state2 = get_state_by_connections('y', 'y', 'r', 'r')  # NS yellow, EW red
+        state2 = build_state_ns_yellow()
         phase2.set('state', state2)
         phases.append(('NS Yellow', y_ns, state2))
         total_phase_time += y_ns
@@ -511,7 +546,8 @@ def create_traffic_lights(signal_plan: Dict, output_path: str, plan_name: str, n
     if all_red > 0 and (g_ns > 0 or g_ew > 0):
         phase3 = ET.SubElement(tl_logic, 'phase')
         phase3.set('duration', str(int(round(all_red))))
-        state3 = get_state_by_connections('r', 'r', 'r', 'r')  # All red
+        # All red: everyone red (including lefts)
+        state3 = 'r' * len(connections) if connections else 'r'
         phase3.set('state', state3)
         phases.append(('All Red', all_red, state3))
         total_phase_time += all_red
@@ -520,7 +556,7 @@ def create_traffic_lights(signal_plan: Dict, output_path: str, plan_name: str, n
     if g_ew > 0:
         phase4 = ET.SubElement(tl_logic, 'phase')
         phase4.set('duration', str(int(round(g_ew))))
-        state4 = get_state_by_connections('r', 'r', 'r', 'G')  # EW green (WB only), NS red
+        state4 = build_state_ew_green()
         phase4.set('state', state4)
         phases.append(('EW Green', g_ew, state4))
         total_phase_time += g_ew
@@ -529,7 +565,7 @@ def create_traffic_lights(signal_plan: Dict, output_path: str, plan_name: str, n
     if y_ew > 0 and g_ew > 0:
         phase5 = ET.SubElement(tl_logic, 'phase')
         phase5.set('duration', str(int(round(y_ew))))
-        state5 = get_state_by_connections('r', 'r', 'r', 'y')  # EW yellow (WB only), NS red
+        state5 = build_state_ew_yellow()
         phase5.set('state', state5)
         phases.append(('EW Yellow', y_ew, state5))
         total_phase_time += y_ew
@@ -538,7 +574,7 @@ def create_traffic_lights(signal_plan: Dict, output_path: str, plan_name: str, n
     if all_red > 0 and (g_ns > 0 or g_ew > 0):
         phase6 = ET.SubElement(tl_logic, 'phase')
         phase6.set('duration', str(int(round(all_red))))
-        state6 = get_state_by_connections('r', 'r', 'r', 'r')  # All red
+        state6 = 'r' * len(connections) if connections else 'r'
         phase6.set('state', state6)
         phases.append(('All Red', all_red, state6))
         total_phase_time += all_red
@@ -568,7 +604,14 @@ def create_traffic_lights(signal_plan: Dict, output_path: str, plan_name: str, n
         print(f"    {name}: {duration:.1f}s ({state})")
 
 
-def create_routes(pcu_data: Dict, present_approaches: set, output_path: str = 'routes.rou.xml', sim_time: int = SIMULATION_TIME):
+def create_routes(
+    pcu_data: Dict,
+    present_approaches: set,
+    output_path: str = 'routes.rou.xml',
+    sim_time: int = SIMULATION_TIME,
+    turn_splits: Optional[Dict[str, Tuple[float, float, float]]] = None,
+    network_file: str = 'sumo_network.net.xml',
+) -> None:
     """
     Generate vehicle routes based on PCU values.
     Converts PCU/hour to vehicles/second for SUMO.
@@ -589,91 +632,84 @@ def create_routes(pcu_data: Dict, present_approaches: set, output_path: str = 'r
     vtype_default.set('minGap', '2.5')
     vtype_default.set('maxSpeed', '13.89')  # 50 km/h
     
-    # Dynamically determine route destinations based on T-junction geometry
-    # In a T-junction (3-way), not all "through" movements exist
-    approach_destinations = {}
+    # Read actual connection availability from the generated network (from-edge -> allowed to-edges)
+    available_to_by_from: Dict[str, set] = {}
+    try:
+        if os.path.exists(network_file):
+            net_tree = ET.parse(network_file)
+            net_root = net_tree.getroot()
+            for conn in net_root.findall('connection'):
+                if conn.get('tl') == 'center':
+                    f = conn.get('from', '')
+                    t = conn.get('to', '')
+                    if f and t:
+                        available_to_by_from.setdefault(f, set()).add(t)
+    except Exception as e:
+        print(f"  Warning: could not read connections for routing: {e}")
+
+    # Default per-approach turn splits (Left, Through, Right) for left-hand traffic (India)
+    # Use field values if available by passing turn_splits like {'NB': (0.15, 0.7, 0.15), ...}
+    default_split = (0.15, 0.70, 0.15)
+    if turn_splits is None:
+        turn_splits = {appr: default_split for appr in ['NB', 'SB', 'EB', 'WB']}
+
+    # Define canonical destinations for L/T/R under left-hand traffic
+    # NB: L->WB_out, T->SB_out, R->EB_out
+    canonical_dest = {
+        # For Northbound approach: straight goes to NB_out (center -> south)
+        'NB': {'L': 'WB_out', 'T': 'NB_out', 'R': 'EB_out'},
+        # For Southbound approach: straight goes to SB_out (center -> north)
+        'SB': {'L': 'EB_out', 'T': 'SB_out', 'R': 'WB_out'},
+        # For Eastbound approach: straight goes to EB_out (center -> west)
+        'EB': {'L': 'NB_out', 'T': 'EB_out', 'R': 'SB_out'},
+        # For Westbound approach: straight goes to EB_out (center -> east)
+        'WB': {'L': 'SB_out', 'T': 'EB_out', 'R': 'NB_out'},
+    }
     
-    # Define valid connections based on T-junction configuration
-    # For NB,SB,WB (missing EB): 
-    #   - NB can only turn (no through to south without EB)
-    #   - SB can go through north or turn east
-    #   - WB can turn north or south
-    if present_approaches == {'NB', 'SB', 'WB'}:
-        # T-junction: missing east approach
-        # Based on actual connections from netconvert:
-        # NB_in -> WB_out, NB_in -> NB_out
-        # SB_in -> SB_out, SB_in -> WB_out
-        # WB_in -> SB_out, WB_in -> WB_out, WB_in -> NB_out
-        approach_destinations = {
-            'NB': 'WB_out',   # NB turns right (east)
-            'SB': 'SB_out',   # SB goes through (northward via SB_out)
-            'WB': 'NB_out'    # WB turns south
-        }
-    elif present_approaches == {'NB', 'SB', 'EB'}:
-        # T-junction: missing west approach
-        approach_destinations = {
-            'NB': 'SB_out',   # NB goes through
-            'SB': 'NB_out',   # SB goes through
-            'EB': 'NB_out'    # EB turns
-        }
-    elif present_approaches == {'NB', 'EB', 'WB'}:
-        # T-junction: missing south approach
-        approach_destinations = {
-            'NB': 'WB_out',   # NB turns
-            'EB': 'WB_out',   # EB goes through
-            'WB': 'EB_out'    # WB goes through
-        }
-    elif present_approaches == {'SB', 'EB', 'WB'}:
-        # T-junction: missing north approach
-        approach_destinations = {
-            'SB': 'WB_out',   # SB turns
-            'EB': 'WB_out',   # EB goes through
-            'WB': 'EB_out'    # WB goes through
-        }
-    else:
-        # 4-way intersection - use connections that netconvert creates
-        # Netconvert creates turn movements (left/right) but not always straight through
-        # For a standard 4-way, use right-turn movements which are always valid
-        turn_right_map = {
-            'NB': 'EB_out',  # NB turns right to go east
-            'EB': 'SB_out',  # EB turns right to go south  
-            'SB': 'WB_out',  # SB turns right to go west
-            'WB': 'NB_out'   # WB turns right to go north
-        }
-        for approach in present_approaches:
-            # Try right turn first (most reliable)
-            if approach in turn_right_map:
-                approach_destinations[approach] = turn_right_map[approach]
-            else:
-                # Fallback to any available output
-                print(f"Fallback to any available output for {approach}")
-                available = [f'{appr}_out' for appr in present_approaches if appr != approach]
-                print(f"Available outputs: {available}")
-                approach_destinations[approach] = available[0] if available else f'{approach}_out'
-    
-    print(f"  Route destinations: {approach_destinations}")
+    # Remove movements that go to missing approaches and those not present in the actual network connections
+    def valid_movements(appr: str) -> Dict[str, str]:
+        mv = canonical_dest[appr].copy()
+        # Filter out destinations whose approach is not present
+        def dest_ok(dest: str) -> bool:
+            # dest like 'WB_out' -> 'WB'
+            return dest.split('_')[0] in present_approaches
+        # Filter by actual network connections from this approach's incoming edge
+        from_edge = f'{appr}_in'
+        allowed_to = available_to_by_from.get(from_edge, None)
+        def conn_ok(dest: str) -> bool:
+            return (allowed_to is None) or (dest in allowed_to)
+        return {k: v for k, v in mv.items() if dest_ok(v) and conn_ok(v)}
     
     for approach, data in pcu_data.items():
         # Only create routes for approaches that exist in the network
         if approach in present_approaches:
             total_pcu = data.get('total_pcu', 0.0)
             if total_pcu > 0:
-                # Convert PCU/hour to vehicles/second
-                # Assuming average PCU factor of 1.0 (mostly cars)
-                veh_per_hour = total_pcu  # Simplified: 1 PCU = 1 vehicle
-                veh_per_sec = veh_per_hour / 3600.0
-                
-                # Create flow
-                flow = ET.SubElement(root, 'flow')
-                flow.set('id', f'flow_{approach}')
-                flow.set('type', 'default')
-                flow.set('from', f'{approach}_in')
-                flow.set('to', approach_destinations[approach])
-                flow.set('begin', '0')
-                flow.set('end', str(sim_time))
-                flow.set('vehsPerHour', str(int(veh_per_hour)))
-                flow.set('departLane', 'best')
-                flow.set('departSpeed', 'max')
+                left_ratio, thru_ratio, right_ratio = turn_splits.get(approach, default_split)
+                movement_map = valid_movements(approach)
+                # Renormalize ratios if some movements are missing (e.g., no through in a T)
+                ratios = {'L': left_ratio, 'T': thru_ratio, 'R': right_ratio}
+                kept = {k: ratios[k] for k in movement_map.keys()}
+                total_ratio = sum(kept.values()) or 1.0
+                kept = {k: v / total_ratio for k, v in kept.items()}
+
+                for mv_key, dest in movement_map.items():
+                    mv_ratio = kept[mv_key]
+                    vehs_per_hour = int(round(total_pcu * mv_ratio))
+                    if vehs_per_hour <= 0:
+                        continue
+                    flow = ET.SubElement(root, 'flow')
+                    flow.set('id', f'flow_{approach}_{mv_key}')
+                    flow.set('type', 'default')
+                    flow.set('from', f'{approach}_in')
+                    flow.set('to', dest)
+                    flow.set('begin', '0')
+                    flow.set('end', str(sim_time))
+                    flow.set('vehsPerHour', str(vehs_per_hour))
+                    flow.set('departLane', 'best')
+                    flow.set('departSpeed', 'max')
+                    # Make insertion robust
+                    flow.set('departPos', 'random_free')
     
     # Write file
     tree = ET.ElementTree(root)
@@ -725,7 +761,13 @@ def run_sumo_simulation(config_file: str, plan_name: str, use_gui: bool = False)
     print(f"\nRunning SUMO simulation for {plan_name}...")
     
     sumo_cmd = 'sumo-gui' if use_gui else 'sumo'
-    cmd = [sumo_cmd, '-c', config_file, '--no-step-log', '--no-warnings']
+    cmd = [
+        sumo_cmd, '-c', config_file,
+        '--no-step-log', '--no-warnings',
+        '--max-depart-delay', '-1',         # never drop vehicles due to spawn delay
+        '--time-to-teleport', '-1',         # do not teleport stuck vehicles
+        '--collision.action', 'none'        # avoid auto-teleports on collision
+    ]
     
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
@@ -832,7 +874,7 @@ def run_webster_pipeline(
     plan_output: str = 'outputs/webster_signal_plan.json',
     net_output: str = 'sumo_network.net.xml',
     add_output: str = 'webster_traffic_lights.add.xml',
-    route_output: str = 'routes.rou.xml',
+    route_output: str = 'generated_routes.rou.xml',
     config_output: str = 'webster_config.sumocfg',
     metrics_output: str = 'outputs/sumo_metrics_webster.json',
 ) -> Dict[str, Any]:
@@ -884,7 +926,14 @@ def run_webster_pipeline(
         present_approaches = {'NB', 'SB', 'EB', 'WB'}
 
     # Create routes
-    create_routes(intersection_data, present_approaches, route_output)
+    create_routes(
+        intersection_data,
+        present_approaches,
+        route_output,
+        SIMULATION_TIME,
+        None,
+        net_output
+    )
 
     # Create SUMO config
     create_sumo_config(

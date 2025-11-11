@@ -4,46 +4,46 @@
 \section{Objectives}
 \label{sec:yolo_objectives}
 
-The project aimed to build a two-stage system for traffic signal optimization:
+We built a simple two-stage system to optimize signals:
 \begin{itemize}
-    \item \textbf{PCU Calculator:} An application that uses YOLOv8 to process uploaded intersection videos, detect and count vehicles, and export the calculated Passenger Car Units (PCU) for each approach to a JSON file.
-    \item \textbf{Signal Timer:} A separate script that ingests the PCU data and applies Webster's method to compute optimal green times and generate an exclusive phase timeline visualization.
+    \item \textbf{PCU Calculator:} A tool that uses YOLOv8 to process uploaded videos, detect and count vehicles, and export Passenger Car Units (PCU) for each approach to a JSON file.
+    \item \textbf{Signal Timer:} A script that reads the PCU data, applies Webster’s method, and outputs optimal green times plus a clear phase timeline.
 \end{itemize}
 
 \section{YOLO (You Only Look Once)}
 \label{sec:yolo_description}
 
-YOLO is a high-performance real-time object detection framework commonly employed in intelligent traffic management systems. It processes complete images in a single evaluation, which enables rapid and accurate identification of multiple object classes such as cars, buses, two-wheelers, and trucks. In traffic applications, YOLO supports vehicle detection, classification, counting, and movement tracking using video feeds. Its operational efficiency and reliability make it suitable for tasks related to congestion monitoring, signal timing optimization, and automated incident detection within modern traffic analysis environments.
+YOLO is a fast, real-time object detector. It processes an entire image in one go, which makes it well-suited to spotting multiple vehicle classes—cars, buses, two-wheelers, trucks—quickly and reliably. In our context, that means accurate detection, classification, and counting using video feeds—exactly what you want for signal timing and congestion analysis.
 
 \section{Workflow}
 \label{sec:yolo_workflow}
 
-Our workflow was successfully implemented in three distinct stages:
+The workflow runs in three straightforward stages:
 
 \subsection{Stage 1: Detection \& PCU Calculation (Streamlit App)}
 
-Developed a Streamlit application (\texttt{main.py}) where a user can upload a recorded video for each of the 3 or 4 approaches of an intersection.
+A Streamlit app (\texttt{main.py}) lets users upload videos for each of the 3 or 4 approaches.
 \begin{itemize}
     \item Integrated YOLOv8 for vehicle detection and tracking in the uploaded videos.
     \item Implemented inbound vehicle counting using virtual stoplines and ROI masks to ensure accurate counts.
-    \item Converted the final vehicle counts to PCU values using IRC-style default factors (e.g., bus=3, car=1, motorcycle=0.5).
-    \item The application's final output is a single JSON file (\texttt{outputs/intersection\_summary.json}) containing the total PCU for each approach (N, S, E, W).
+    \item Converted counts to PCU using IRC-style factors (e.g., bus=3, car=1, motorcycle=0.5).
+    \item Final output: a single JSON file (\texttt{outputs/intersection\_summary.json}) with PCU totals for each approach (N, S, E, W).
 \end{itemize}
 
 \subsection{Stage 2: Signal Timing \& Visualization (Integrated in Streamlit)}
 
-The Streamlit application integrates Webster signal timing calculation directly into the workflow:
+The app then computes timings using Webster’s method:
 \begin{itemize}
     \item Loads PCU data from the \texttt{outputs/intersection\_summary.json} file created in Stage 1.
-    \item Applies Webster's method to compute optimal signal timings based on IRC:106-1990 standards.
-    \item Calculates the effective green times, applies fixed lost times (12s), amber (3s), and all-red (2s) intervals, and produces per-phase exclusive timelines.
+    \item Applies Webster’s method (aligned with IRC:106-1990) to compute optimal timings.
+    \item Calculates effective greens and applies fixed lost times (12s), amber (3s), and all-red (2s), producing per-phase timelines.
     \item Saves the Webster-based signal plan as JSON file (\texttt{webster\_signal\_plan.json}).
     \item Generates and displays a Plotly phase diagram visualizing the NS vs EW exclusive phases, ensuring only one phase group is green at a time.
 \end{itemize}
 
 \subsection{Stage 3: SUMO Simulation \& Validation (Integrated in Streamlit)}
 
-The Streamlit application integrates SUMO simulation validation into the workflow:
+Finally, the app validates in SUMO:
 \begin{itemize}
     \item \textbf{Network Generation:} Dynamically creates SUMO network files (.nod.xml, .edg.xml) using netconvert, automatically detecting intersection type (3-way T-junction or 4-way intersection) from signal plans.
     \item \textbf{Traffic Light Programs:} Converts signal timing plans into SUMO traffic light phase definitions (.add.xml), ensuring phase state strings match the actual connection order from the generated network.
@@ -56,17 +56,17 @@ The Streamlit application integrates SUMO simulation validation into the workflo
 \section{Results and Analysis}
 \label{sec:yolo_results}
 
-We successfully processed two key intersections using the integrated Streamlit workflow combining YOLO detection, Webster optimization, and SUMO validation.
+Using the integrated workflow (YOLO + Webster + SUMO), we processed two key intersections.
 
 \subsection{Intersection 1: Jyoti Circle (3-Approach Y-Junction)}
 
-\textbf{Analysis:} The total traffic (6,802 PCU) resulted in a minimal 60-second cycle using Webster's method. The demand was highly unbalanced (NS: 5,302 PCU vs. W: 1,500 PCU, a 3.5:1 ratio). Webster's method correctly allocated highly skewed green time (36.53s for NS vs. 9.86s for W, a 3.7:1 ratio), proving its ability to prioritize high-demand routes proportionally.
+\textbf{Analysis:} Total traffic (6,802 PCU) produced a minimal 60-second cycle. Demand was highly unbalanced (NS: 5,302 vs W: 1,500 PCU, ~3.5:1). Webster’s method assigned green time accordingly (36.53s NS vs 9.86s W, ~3.7:1), prioritizing the high-demand leg.
 
 \subsection{Intersection 2: Hampankatta Circle (4-Approach)}
 
-\textbf{Analysis:} This intersection had 57\% higher total traffic (10,680 PCU), with high PCU values (W=3480) indicating heavy bus routes. Webster's method correctly identified that the 60s minimum was insufficient and calculated a longer 92.07s cycle to handle this high saturation.
+\textbf{Analysis:} Total traffic was 57\% higher (10,680 PCU), with heavy bus movements (W=3480). The 60s minimum wouldn’t cut it; the computed cycle was 92.07s to handle the higher saturation.
 
-Furthermore, Webster's method demonstrated proportional splitting within a phase. The EW phase's demand was uneven (W: 3480 vs. E: 1560, a 2.2:1 ratio). The method correctly assigned nearly double the green time to the Westbound approach (24.76s) compared to the Eastbound (12.53s), maintaining proportional allocation based on demand.
+Within the EW phase, demand was uneven (W: 3480 vs E: 1560, ~2.2:1). The split reflected that: ~24.76s W vs ~12.53s E—nearly 2:1—keeping allocation proportional.
 
 \section{Comparative Analysis}
 \label{sec:yolo_comparative}
@@ -92,7 +92,7 @@ Green Time Split & Highly Skewed (3.7:1) & Balanced (1.1:1) \\
 
 \subsection{SUMO Simulation Validation Results}
 
-To provide objective validation of the Webster-based signal timing approach, the signal plan was tested in SUMO microsimulation under realistic traffic conditions. The simulation was conducted for a 3-way T-junction (Jyoti Circle configuration) with the following setup:
+To objectively validate the Webster-based plan, we ran SUMO microsimulations for a 3-way T-junction (Jyoti Circle configuration) using:
 
 \textbf{Simulation Parameters:}
 \begin{itemize}
@@ -105,7 +105,7 @@ To provide objective validation of the Webster-based signal timing approach, the
 
 \textbf{Performance Metrics:}
 
-The SUMO simulation provides comprehensive performance metrics that validate the effectiveness of the Webster-based signal timing:
+SUMO outputs comprehensive metrics to validate timing effectiveness:
 \begin{itemize}
     \item \textbf{Average Delay:} Measures waiting time at the intersection per vehicle
     \item \textbf{Average Waiting Time:} Time vehicles spend completely stopped
@@ -117,10 +117,10 @@ The SUMO simulation provides comprehensive performance metrics that validate the
 
 \textbf{Key Findings from SUMO Validation:}
 \begin{itemize}
-    \item The Webster-based approach produces effective signal timing plans validated in realistic traffic scenarios with vehicle interactions, queuing, and stochastic arrival patterns.
-    \item The simulation accounts for complex traffic dynamics that analytical formulas cannot capture, providing objective evidence of signal plan effectiveness.
-    \item The integrated workflow (YOLO detection → Webster calculation → SUMO validation) provides a complete, validated solution for traffic signal optimization.
-    \item The Streamlit web application makes the entire process accessible, enabling engineers and planners to validate signal timings without requiring command-line expertise.
+    \item The Webster-based approach yields effective signal timing plans in realistic scenarios with queues, interactions, and random arrivals.
+    \item Simulation captures dynamics that pure formulas miss, adding objective evidence.
+    \item The end-to-end flow (YOLO → Webster → SUMO) is complete and validated.
+    \item The Streamlit app keeps it accessible—no command line required.
 \end{itemize}
 
 \newpage
