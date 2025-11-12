@@ -136,6 +136,9 @@ def create_sumo_network_files(signal_plans: List[Dict] = None):
             node.set('y', str(pos['y']))
             if node_id == 'center':
                 node.set('type', 'traffic_light')
+                # Add circular/roundabout shape (octagonal approximation)
+                # Creates a signalized roundabout appearance
+                node.set('shape', '200,250 215,285 250,300 285,285 300,250 285,215 250,200 215,215')
             else:
                 node.set('type', 'priority')
     
