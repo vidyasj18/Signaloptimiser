@@ -200,16 +200,19 @@ def create_sumo_network_files(signal_plans: List[Dict] = None):
     # For each approach, create connections for all valid movements
     turn_connections = {
         'NB': {
+            'L': ('NB_in', 'EB_out'),  # Left: NB_in -> EB_out (if EB exists)
             'T': ('NB_in', 'NB_out'),  # Straight: NB_in -> NB_out
             'R': ('NB_in', 'WB_out'),  # Right: NB_in -> WB_out (if WB exists)
         },
         'SB': {
-            'T': ('SB_in', 'SB_out'),  # Straight: SB_in -> SB_out
             'L': ('SB_in', 'WB_out'),  # Left: SB_in -> WB_out (if WB exists)
+            'T': ('SB_in', 'SB_out'),  # Straight: SB_in -> SB_out
+            'R': ('SB_in', 'EB_out'),  # Right: SB_in -> EB_out (if EB exists)
         },
+        
         'EB': {
-            'T': ('EB_in', 'EB_out'),  # Straight: EB_in -> EB_out
             'L': ('EB_in', 'NB_out'),  # Left: EB_in -> NB_out
+            'T': ('EB_in', 'EB_out'),  # Straight: EB_in -> EB_out
             'R': ('EB_in', 'SB_out'),  # Right: EB_in -> SB_out
         },
         'WB': {

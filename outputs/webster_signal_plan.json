@@ -1,30 +1,38 @@
 {
   "method": "Webster",
-  "cycle_length": 62.131065532766385,
+  "cycle_length": 89.03225806451614,
   "approaches": {
     "NB": {
-      "effective_green": 18.734661656026486,
-      "arrival_flow_rate": 2542.0,
+      "effective_green": 20.772743747734683,
+      "arrival_flow_rate": 2880.0,
       "saturation_flow_rate": 3600,
-      "green": 18.734661656026486,
+      "green": 20.772743747734683,
       "amber": 3.0,
-      "red": 40.396403876739896
+      "red": 65.25951431678146
     },
     "SB": {
-      "effective_green": 20.34133208915543,
+      "effective_green": 19.90721275824574,
       "arrival_flow_rate": 2760.0,
       "saturation_flow_rate": 3600,
-      "green": 20.34133208915543,
+      "green": 19.90721275824574,
       "amber": 3.0,
-      "red": 38.789733443610956
+      "red": 66.12504530627041
+    },
+    "EB": {
+      "effective_green": 11.251902863356293,
+      "arrival_flow_rate": 1560.0,
+      "saturation_flow_rate": 3600,
+      "green": 11.251902863356293,
+      "amber": 3.0,
+      "red": 74.78035520115985
     },
     "WB": {
-      "effective_green": 11.055071787584474,
-      "arrival_flow_rate": 1500.0,
+      "effective_green": 25.100398695179422,
+      "arrival_flow_rate": 3480.0,
       "saturation_flow_rate": 3600,
-      "green": 11.055071787584474,
+      "green": 25.100398695179422,
       "amber": 3.0,
-      "red": 48.07599374518191
+      "red": 60.93185936933672
     }
   }
 }
