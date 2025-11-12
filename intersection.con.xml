@@ -1,0 +1,2 @@
+<?xml version='1.0' encoding='utf-8'?>
+<connections xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/connections_file.xsd"><connection from="WB_in" to="SB_out" /><connection from="WB_in" to="NB_out" /><connection from="SB_in" to="SB_out" /><connection from="SB_in" to="WB_out" /><connection from="NB_in" to="NB_out" /><connection from="NB_in" to="WB_out" /></connections>

@@ -1,0 +1,10 @@
+{
+  "vehicle_count": 5612,
+  "avg_delay": 44.2892017106201,
+  "avg_waiting_time": 44.2892017106201,
+  "avg_travel_time": 104.40288667141839,
+  "avg_time_loss": 70.12879009265863,
+  "avg_depart_delay": 127.0045919458303,
+  "total_delay": 248551.0,
+  "total_waiting_time": 248551.0
+}

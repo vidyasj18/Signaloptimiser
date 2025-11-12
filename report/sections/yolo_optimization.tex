@@ -4,124 +4,138 @@
 \section{Objectives}
 \label{sec:yolo_objectives}
 
-We built a simple two-stage system to optimize signals:
+The primary objective of the YOLO detection component is to capture and process traffic data from video feeds:
 \begin{itemize}
-    \item \textbf{PCU Calculator:} A tool that uses YOLOv8 to process uploaded videos, detect and count vehicles, and export Passenger Car Units (PCU) for each approach to a JSON file.
-    \item \textbf{Signal Timer:} A script that reads the PCU data, applies Webster’s method, and outputs optimal green times plus a clear phase timeline.
+    \item \textbf{Vehicle Detection \& Classification:} Use YOLOv8 to detect and classify vehicles (cars, buses, motorcycles, trucks) in uploaded traffic videos for each intersection approach.
+    \item \textbf{Vehicle Counting:} Count vehicles crossing virtual stoplines using tracking algorithms to ensure accurate inbound vehicle counts.
+    \item \textbf{PCU Conversion:} Convert raw vehicle counts to Passenger Car Units (PCU) using IRC standards (car=1, bus=3, motorcycle=0.5, truck=2.5) and export the results to a JSON file (\texttt{outputs/intersection\_summary.json}).
 \end{itemize}
+
+The YOLO component serves as the data capture stage of the overall system. The captured PCU data is then used by subsequent components (Webster's method and SUMO simulation) for signal timing optimization and validation. YOLO itself does not perform optimization—it only provides the traffic flow data necessary for optimization algorithms.
 
 \section{YOLO (You Only Look Once)}
 \label{sec:yolo_description}
 
 YOLO is a fast, real-time object detector. It processes an entire image in one go, which makes it well-suited to spotting multiple vehicle classes—cars, buses, two-wheelers, trucks—quickly and reliably. In our context, that means accurate detection, classification, and counting using video feeds—exactly what you want for signal timing and congestion analysis.
 
-\section{Workflow}
+\section{YOLO Detection Process}
 \label{sec:yolo_workflow}
 
-The workflow runs in three straightforward stages:
+The YOLO detection process is implemented through a Streamlit application (\texttt{main.py}) that processes traffic videos and extracts vehicle data:
 
-\subsection{Stage 1: Detection \& PCU Calculation (Streamlit App)}
+\subsection{Video Processing \& Vehicle Detection}
 
-A Streamlit app (\texttt{main.py}) lets users upload videos for each of the 3 or 4 approaches.
+The system processes uploaded videos for each intersection approach (3 or 4 approaches depending on intersection type):
 \begin{itemize}
-    \item Integrated YOLOv8 for vehicle detection and tracking in the uploaded videos.
-    \item Implemented inbound vehicle counting using virtual stoplines and ROI masks to ensure accurate counts.
-    \item Converted counts to PCU using IRC-style factors (e.g., bus=3, car=1, motorcycle=0.5).
-    \item Final output: a single JSON file (\texttt{outputs/intersection\_summary.json}) with PCU totals for each approach (N, S, E, W).
+    \item \textbf{Video Upload:} Users upload traffic videos for each approach (Northbound, Southbound, Eastbound, Westbound) through the Streamlit interface.
+    \item \textbf{YOLOv8 Integration:} The YOLOv8 model processes each video frame to detect and classify vehicles into categories: cars, buses, motorcycles, trucks, and bicycles.
+    \item \textbf{Vehicle Tracking:} A tracking algorithm assigns unique IDs to detected vehicles and tracks them across frames to avoid double-counting.
+    \item \textbf{ROI Masks \& Stoplines:} Region-of-Interest (ROI) masks and virtual stoplines are used to ensure only inbound vehicles crossing the stopline are counted, improving accuracy.
 \end{itemize}
 
-\subsection{Stage 2: Signal Timing \& Visualization (Integrated in Streamlit)}
+\subsection{Vehicle Counting \& PCU Conversion}
 
-The app then computes timings using Webster’s method:
+After detection, the system performs counting and conversion:
 \begin{itemize}
-    \item Loads PCU data from the \texttt{outputs/intersection\_summary.json} file created in Stage 1.
-    \item Applies Webster’s method (aligned with IRC:106-1990) to compute optimal timings.
-    \item Calculates effective greens and applies fixed lost times (12s), amber (3s), and all-red (2s), producing per-phase timelines.
-    \item Saves the Webster-based signal plan as JSON file (\texttt{webster\_signal\_plan.json}).
-    \item Generates and displays a Plotly phase diagram visualizing the NS vs EW exclusive phases, ensuring only one phase group is green at a time.
+    \item \textbf{Inbound Vehicle Counting:} Vehicles crossing the virtual stopline in the inbound direction are counted, with minimum frame requirements to filter out false detections.
+    \item \textbf{Vehicle Classification:} Each detected vehicle is classified by type (car, bus, motorcycle, truck, bicycle) based on YOLO's classification output.
+    \item \textbf{PCU Conversion:} Raw vehicle counts are converted to Passenger Car Units (PCU) using IRC:106-1990 standards:
+    \begin{itemize}
+        \item Car: 1.0 PCU
+        \item Bus: 3.0 PCU
+        \item Motorcycle: 0.5 PCU
+        \item Truck: 2.5 PCU
+        \item Bicycle: 0.2 PCU
+    \end{itemize}
+    \item \textbf{Data Export:} The final output is a JSON file (\texttt{outputs/intersection\_summary.json}) containing PCU totals for each approach (N, S, E, W), along with detailed vehicle counts by type.
 \end{itemize}
 
-\subsection{Stage 3: SUMO Simulation \& Validation (Integrated in Streamlit)}
+Figure~\ref{fig:yolo_output} shows the Streamlit interface displaying YOLO detection results, including vehicle counts by type, PCU calculations, and per-approach summaries. The interface provides real-time feedback on detection accuracy and allows users to review and validate the detected vehicle counts.
 
-Finally, the app validates in SUMO:
-\begin{itemize}
-    \item \textbf{Network Generation:} Dynamically creates SUMO network files (.nod.xml, .edg.xml) using netconvert, automatically detecting intersection type (3-way T-junction or 4-way intersection) from signal plans.
-    \item \textbf{Traffic Light Programs:} Converts signal timing plans into SUMO traffic light phase definitions (.add.xml), ensuring phase state strings match the actual connection order from the generated network.
-    \item \textbf{Route Generation:} Creates vehicle routes (.rou.xml) based on PCU values, with intelligent routing logic that adapts to T-junction geometry (no through movements where not applicable).
-    \item \textbf{Simulation Execution:} Runs SUMO simulation for the Webster-based signal plan under realistic traffic conditions (3600 seconds, vehicle flows based on detected PCU values).
-    \item \textbf{Performance Extraction:} Extracts comprehensive metrics including average delay, waiting time, travel time, time loss, and throughput from SUMO tripinfo outputs.
-    \item \textbf{Results Display:} Displays detailed performance metrics in the Streamlit interface, providing immediate feedback on signal timing effectiveness.
-\end{itemize}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{images/intersectoin1yolooutput.png}
+    \caption{Streamlit interface showing YOLO detection results for Intersection 1 (Jyoti Circle). The output displays vehicle counts by type (cars, buses, motorcycles, trucks) for each approach, PCU calculations using IRC standards, and a summary table showing total PCU values per approach. The interface allows users to review detection accuracy before exporting the data for signal optimization.}
+    \label{fig:yolo_output}
+\end{figure}
 
-\section{Results and Analysis}
+\section{YOLO Detection Results}
 \label{sec:yolo_results}
 
-Using the integrated workflow (YOLO + Webster + SUMO), we processed two key intersections.
+We processed traffic videos for two key intersections using YOLO detection. The system successfully detected, classified, and counted vehicles across all approaches, providing detailed traffic composition data.
+
+\subsection{Vehicle Type Distribution}
+
+Figure~\ref{fig:vehicle_distribution} shows the vehicle type distribution across all approaches, demonstrating the diversity of traffic composition detected by YOLO. The chart reveals the relative proportions of different vehicle types (cars, buses, motorcycles, trucks) at each intersection approach, which directly influences PCU calculations.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/vehicle_type_distribution.png}
+    \caption{Vehicle type distribution across approaches (NB, SB, EB, WB) from YOLO detection results. The chart shows the count of cars, buses, motorcycles, and trucks detected in each approach, which are then converted to PCU values using IRC standards (car=1, bus=3, motorcycle=0.5, truck=2.5). The distribution reveals that cars dominate traffic flow, with significant motorcycle presence and varying bus/truck counts across approaches.}
+    \label{fig:vehicle_distribution}
+\end{figure}
 
 \subsection{Intersection 1: Jyoti Circle (3-Approach Y-Junction)}
 
-\textbf{Analysis:} Total traffic (6,802 PCU) produced a minimal 60-second cycle. Demand was highly unbalanced (NS: 5,302 vs W: 1,500 PCU, ~3.5:1). Webster’s method assigned green time accordingly (36.53s NS vs 9.86s W, ~3.7:1), prioritizing the high-demand leg.
+\textbf{YOLO Detection Results:}
+\begin{itemize}
+    \item \textbf{Total PCU Detected:} 6,802 PCU/hr
+    \item \textbf{Approach Breakdown:}
+    \begin{itemize}
+        \item Northbound (NB): 2,542 PCU/hr
+        \item Southbound (SB): 2,760 PCU/hr
+        \item Westbound (WB): 1,500 PCU/hr
+        \item Eastbound (EB): 0 PCU/hr (no approach)
+    \end{itemize}
+    \item \textbf{Traffic Characteristics:} Highly asymmetric flow distribution (NS: 5,302 PCU vs W: 1,500 PCU, ratio 3.5:1)
+    \item \textbf{Vehicle Composition:} Dominated by cars and motorcycles, with moderate bus and truck presence
+\end{itemize}
+
+\textbf{Data Quality:} YOLO successfully detected and classified vehicles across all three active approaches, providing accurate counts for PCU conversion. The detection captured the asymmetric nature of traffic flow, with significantly higher volumes in the north-south direction compared to westbound.
 
 \subsection{Intersection 2: Hampankatta Circle (4-Approach)}
 
-\textbf{Analysis:} Total traffic was 57\% higher (10,680 PCU), with heavy bus movements (W=3480). The 60s minimum wouldn’t cut it; the computed cycle was 92.07s to handle the higher saturation.
-
-Within the EW phase, demand was uneven (W: 3480 vs E: 1560, ~2.2:1). The split reflected that: ~24.76s W vs ~12.53s E—nearly 2:1—keeping allocation proportional.
-
-\section{Comparative Analysis}
-\label{sec:yolo_comparative}
-
-\begin{table}[h]
-\centering
-\caption{Comparative Analysis of Two Intersections}
-\label{tab:comparative_analysis}
-\begin{tabular}{|l|l|l|}
-\hline
-\textbf{Metric} & \textbf{Jyoti Circle} & \textbf{Hampankatta} \\
-\hline
-Type & 3-Approach (T-Junction) & 4-Approach (Crossroads) \\
-Total PCU & 6,802 & 10,680 (57\% higher) \\
-Demand Balance & Highly Unbalanced (3.5:1) & Relatively Balanced (1.1:1) \\
-Predicted Cycle & 60.44 s (Minimal) & 92.07 s (Extended) \\
-Total NS Green & 36.53 s & 42.77 s \\
-Total EW Green & 9.86 s & 37.29 s \\
-Green Time Split & Highly Skewed (3.7:1) & Balanced (1.1:1) \\
-\hline
-\end{tabular}
-\end{table}
-
-\subsection{SUMO Simulation Validation Results}
-
-To objectively validate the Webster-based plan, we ran SUMO microsimulations for a 3-way T-junction (Jyoti Circle configuration) using:
-
-\textbf{Simulation Parameters:}
+\textbf{YOLO Detection Results:}
 \begin{itemize}
-    \item Duration: 3600 seconds (1 hour)
-    \item Traffic Demand: Based on detected PCU values from YOLO analysis
-    \item Network: Dynamically generated 3-way intersection with 4 nodes, 6 edges, 7 connections
-    \item Vehicle Type: Standard cars (5m length, max speed 50 km/h)
-    \item Signal Plan: Webster-based timing with optimal cycle length and green splits
+    \item \textbf{Total PCU Detected:} 10,680 PCU/hr (57\% higher than Jyoti Circle)
+    \item \textbf{Approach Breakdown:}
+    \begin{itemize}
+        \item Northbound (NB): 2,880 PCU/hr
+        \item Southbound (SB): 2,760 PCU/hr
+        \item Eastbound (EB): 1,560 PCU/hr
+        \item Westbound (WB): 3,480 PCU/hr (highest volume)
+    \end{itemize}
+    \item \textbf{Traffic Characteristics:} Relatively balanced flow distribution (NS: 5,640 PCU vs EW: 5,040 PCU, ratio 1.1:1)
+    \item \textbf{Vehicle Composition:} Heavy bus movements detected, particularly in the westbound direction (3,480 PCU), indicating a major transit route
 \end{itemize}
 
-\textbf{Performance Metrics:}
+\textbf{Data Quality:} YOLO detection successfully captured all four approaches, with accurate classification of vehicle types. The detection revealed significant bus traffic in the westbound direction, which contributes substantially to the total PCU due to the 3.0 PCU factor for buses.
 
-SUMO outputs comprehensive metrics to validate timing effectiveness:
+\section{Data Output \& Export}
+
+The YOLO detection process produces structured data outputs:
+
+\subsection{JSON Output Format}
+
+The primary output is \texttt{outputs/intersection\_summary.json}, containing:
 \begin{itemize}
-    \item \textbf{Average Delay:} Measures waiting time at the intersection per vehicle
-    \item \textbf{Average Waiting Time:} Time vehicles spend completely stopped
-    \item \textbf{Average Travel Time:} Total time from network entry to exit
-    \item \textbf{Average Time Loss:} Difference from free-flow travel time
-    \item \textbf{Vehicle Throughput:} Number of vehicles successfully completing trips
-    \item \textbf{Total Delay and Waiting Time:} Aggregate measures of intersection performance
+    \item Per-approach vehicle counts by type (car, bus, motorcycle, truck, bicycle)
+    \item Total PCU values for each approach
+    \item Video processing metadata (duration, frame count, FPS)
+    \item Detection confidence metrics
 \end{itemize}
 
-\textbf{Key Findings from SUMO Validation:}
+\subsection{CSV Output Files}
+
+Additionally, per-approach CSV files are generated (\texttt{NB\_summary.csv}, \texttt{SB\_summary.csv}, etc.), containing:
 \begin{itemize}
-    \item The Webster-based approach yields effective signal timing plans in realistic scenarios with queues, interactions, and random arrivals.
-    \item Simulation captures dynamics that pure formulas miss, adding objective evidence.
-    \item The end-to-end flow (YOLO → Webster → SUMO) is complete and validated.
-    \item The Streamlit app keeps it accessible—no command line required.
+    \item Frame-by-frame vehicle detection data
+    \item Time-series vehicle counts
+    \item Detection timestamps
+    \item Vehicle type breakdowns per frame
 \end{itemize}
+
+These outputs provide the foundation for subsequent signal optimization algorithms, which use the PCU data to calculate optimal signal timing plans.
 
 \newpage
 

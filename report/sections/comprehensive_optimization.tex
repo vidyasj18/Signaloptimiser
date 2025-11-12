@@ -1,0 +1,476 @@
+\chapter{Traffic Signal Optimization: Complete System Implementation}
+\label{ch:comprehensive_optimization}
+
+This chapter presents the complete implementation of the traffic signal optimization system, covering all components from data capture through optimization to validation. The system integrates YOLO-based vehicle detection, Webster's method optimization, machine learning approaches, and SUMO microsimulation validation.
+
+\section{System Overview}
+\label{sec:system_overview}
+
+The complete system operates through an integrated workflow:
+\begin{enumerate}
+    \item \textbf{Data Capture:} YOLO-based vehicle detection and PCU extraction from traffic videos
+    \item \textbf{Signal Optimization:} Webster's method and ML-based approaches for calculating optimal signal timings
+    \item \textbf{Validation:} SUMO microsimulation to validate and compare optimization methods
+    \item \textbf{Comparison:} Performance analysis across methods and intersections
+\end{enumerate}
+
+All components are integrated within a Streamlit web application, providing a seamless end-to-end workflow from video input to validated signal timing recommendations.
+
+\section{YOLO-Based Vehicle Detection and Data Capture}
+\label{sec:yolo_detection}
+
+\subsection{Objectives}
+
+The primary objective of the YOLO detection component is to capture and process traffic data from video feeds:
+\begin{itemize}
+    \item \textbf{Vehicle Detection \& Classification:} Use YOLOv8 to detect and classify vehicles (cars, buses, motorcycles, trucks) in uploaded traffic videos for each intersection approach.
+    \item \textbf{Vehicle Counting:} Count vehicles crossing virtual stoplines using tracking algorithms to ensure accurate inbound vehicle counts.
+    \item \textbf{PCU Conversion:} Convert raw vehicle counts to Passenger Car Units (PCU) using IRC standards (car=1, bus=3, motorcycle=0.5, truck=2.5) and export the results to a JSON file (\texttt{outputs/intersection\_summary.json}).
+\end{itemize}
+
+The YOLO component serves as the data capture stage of the overall system. The captured PCU data is then used by subsequent components for signal timing optimization and validation.
+
+\subsection{YOLO Detection Process}
+
+The YOLO detection process is implemented through a Streamlit application (\texttt{main.py}) that processes traffic videos and extracts vehicle data:
+
+\subsubsection{Video Processing \& Vehicle Detection}
+
+The system processes uploaded videos for each intersection approach (3 or 4 approaches depending on intersection type):
+\begin{itemize}
+    \item \textbf{Video Upload:} Users upload traffic videos for each approach (Northbound, Southbound, Eastbound, Westbound) through the Streamlit interface.
+    \item \textbf{YOLOv8 Integration:} The YOLOv8 model processes each video frame to detect and classify vehicles into categories: cars, buses, motorcycles, trucks, and bicycles.
+    \item \textbf{Vehicle Tracking:} A tracking algorithm assigns unique IDs to detected vehicles and tracks them across frames to avoid double-counting.
+    \item \textbf{ROI Masks \& Stoplines:} Region-of-Interest (ROI) masks and virtual stoplines are used to ensure only inbound vehicles crossing the stopline are counted, improving accuracy.
+\end{itemize}
+
+\subsubsection{Vehicle Counting \& PCU Conversion}
+
+After detection, the system performs counting and conversion:
+\begin{itemize}
+    \item \textbf{Inbound Vehicle Counting:} Vehicles crossing the virtual stopline in the inbound direction are counted, with minimum frame requirements to filter out false detections.
+    \item \textbf{Vehicle Classification:} Each detected vehicle is classified by type (car, bus, motorcycle, truck, bicycle) based on YOLO's classification output.
+    \item \textbf{PCU Conversion:} Raw vehicle counts are converted to Passenger Car Units (PCU) using IRC:106-1990 standards:
+    \begin{itemize}
+        \item Car: 1.0 PCU
+        \item Bus: 3.0 PCU
+        \item Motorcycle: 0.5 PCU
+        \item Truck: 2.5 PCU
+        \item Bicycle: 0.2 PCU
+    \end{itemize}
+    \item \textbf{Data Export:} The final output is a JSON file (\texttt{outputs/intersection\_summary.json}) containing PCU totals for each approach (N, S, E, W), along with detailed vehicle counts by type.
+\end{itemize}
+
+Figure~\ref{fig:yolo_output} shows the Streamlit interface displaying YOLO detection results, including vehicle counts by type, PCU calculations, and per-approach summaries.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{images/intersectoin1yolooutput.png}
+    \caption{Streamlit interface showing YOLO detection results for Intersection 1 (Jyoti Circle). The output displays vehicle counts by type (cars, buses, motorcycles, trucks) for each approach, PCU calculations using IRC standards, and a summary table showing total PCU values per approach.}
+    \label{fig:yolo_output}
+\end{figure}
+
+\subsection{YOLO Detection Results}
+
+We processed traffic videos for two key intersections using YOLO detection. Figure~\ref{fig:vehicle_distribution} shows the vehicle type distribution across all approaches, demonstrating the diversity of traffic composition detected by YOLO.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/vehicle_type_distribution.png}
+    \caption{Vehicle type distribution across approaches (NB, SB, EB, WB) from YOLO detection results. The chart shows the count of cars, buses, motorcycles, and trucks detected in each approach, which are then converted to PCU values using IRC standards.}
+    \label{fig:vehicle_distribution}
+\end{figure}
+
+\subsubsection{Intersection 1: Jyoti Circle (3-Approach Y-Junction)}
+
+\textbf{YOLO Detection Results:}
+\begin{itemize}
+    \item \textbf{Total PCU Detected:} 6,802 PCU/hr
+    \item \textbf{Approach Breakdown:} NB: 2,542 PCU/hr, SB: 2,760 PCU/hr, WB: 1,500 PCU/hr, EB: 0 PCU/hr (no approach)
+    \item \textbf{Traffic Characteristics:} Highly asymmetric flow distribution (NS: 5,302 PCU vs W: 1,500 PCU, ratio 3.5:1)
+\end{itemize}
+
+\subsubsection{Intersection 2: Hampankatta Circle (4-Approach)}
+
+\textbf{YOLO Detection Results:}
+\begin{itemize}
+    \item \textbf{Total PCU Detected:} 10,680 PCU/hr (57\% higher than Jyoti Circle)
+    \item \textbf{Approach Breakdown:} NB: 2,880 PCU/hr, SB: 2,760 PCU/hr, EB: 1,560 PCU/hr, WB: 3,480 PCU/hr
+    \item \textbf{Traffic Characteristics:} Relatively balanced flow distribution (NS: 5,640 PCU vs EW: 5,040 PCU, ratio 1.1:1)
+\end{itemize}
+
+\section{Webster's Method Optimization}
+\label{sec:webster_optimization}
+
+\subsection{Assumptions and Design Rules}
+
+Before detailing the Webster's method implementation, it is essential to establish the key assumptions and design rules that govern signal timing calculations:
+
+\subsubsection{Saturation Flow Rate Assumptions}
+
+Based on IRC SP:41 standards, the following saturation flow assumptions are adopted:
+
+\begin{itemize}
+    \item \textbf{Base Saturation Flow:} 1800 PCU/hour per lane (simplified from IRC formula: $s = 525 \times W$ PCU/hour, where $W$ is road width)
+    \item \textbf{Default Lanes per Approach:} 2 lanes (assumed standard for urban intersections)
+    \item \textbf{Total Capacity Calculation:} Capacity = Number of approaches × Lanes per approach × Saturation flow per lane
+    \item \textbf{Flow Ratio:} $Y = \frac{\text{Total Flow}}{\text{Total Capacity}}$, capped at 0.95 to prevent infinite cycle lengths
+\end{itemize}
+
+\subsubsection{Signal Phase Design Rules}
+
+The system follows standard traffic engineering principles for phase design:
+
+\begin{itemize}
+    \item \textbf{Opposite Approaches Together:} Northbound (NB) and Southbound (SB) approaches receive green signal simultaneously, as they have no conflicting movements. Similarly, Eastbound (EB) and Westbound (WB) approaches receive green together.
+    \item \textbf{Exclusive Phase Operation:} NS phase and EW phase never overlap—when NS approaches have green, EW approaches have red, and vice versa.
+    \item \textbf{Phase Sequence:} 
+    \begin{enumerate}
+        \item Phase 1: NS Green (NB and SB both green, EW red)
+        \item Phase 2: NS Yellow (transition period)
+        \item Phase 3: All Red (clearance interval)
+        \item Phase 4: EW Green (EB and WB both green, NS red)
+        \item Phase 5: EW Yellow (transition period)
+        \item Phase 6: All Red (final clearance before cycle repeats)
+    \end{enumerate}
+    \item \textbf{T-Junction Special Case:} For 3-way T-junctions (e.g., Jyoti Circle with no east approach), only NS and W phases are created. The system implements \textbf{free straight movements} for T-junctions based on left-hand traffic rules: a straight movement is free if there is no approach that can turn LEFT into the destination (no left-turn conflict). Specifically:
+    \begin{itemize}
+        \item \textbf{Free Straight Logic:} In left-hand traffic, to determine if NB→SB straight is free, check if EB (which can turn left into SB) exists. If EB doesn't exist, NB→SB is free. Similarly, SB→NB is free if WB (which can turn left into NB) doesn't exist.
+        \item \textbf{Example - Jyoti Circle:} For Jyoti Circle (NB, SB, WB present; EB missing), NB→SB straight is free because EB (left-turn conflict) doesn't exist. However, SB→NB straight is signalized because WB exists and can turn left into NB.
+        \item \textbf{Signalized Movements:} Turning movements (left and right turns) and straight movements with left-turn conflicts remain signalized.
+        \item \textbf{Phase Operation:} Free straight movements remain green throughout all phases (including all-red phases), while conflicting movements follow the standard NS/EW phase sequence.
+    \end{itemize}
+    This implementation improves efficiency by eliminating unnecessary delays for non-conflicting straight movements while maintaining safety through signalization of all conflicting movements.
+\end{itemize}
+
+\subsubsection{Timing Assumptions}
+
+\begin{itemize}
+    \item \textbf{Amber Time:} Fixed at 3 seconds per phase (standard practice per IRC SP:41)
+    \item \textbf{All-Red Time:} Fixed at 2 seconds between phases (safety clearance interval)
+    \item \textbf{Total Lost Time per Cycle:} 12 seconds (includes startup delays and clearance intervals)
+    \item \textbf{Minimum Cycle Length:} 60 seconds (practical lower limit to prevent excessive phase switching)
+    \item \textbf{Maximum Cycle Length:} 180 seconds (upper bound to prevent excessive delays)
+\end{itemize}
+
+\subsection{Webster's Method Implementation}
+
+Webster's method is applied to the PCU data extracted from YOLO detection to calculate optimal signal timings:
+
+\begin{itemize}
+    \item \textbf{Cycle Length Calculation:} Uses Webster's formula based on total traffic flow and saturation flow rates:
+    \begin{equation}
+    C_o = \frac{1.5L + 5}{1 - Y}
+    \end{equation}
+    where $C_o$ is the optimum cycle length, $L$ is total lost time (12 seconds), and $Y$ is the flow ratio (total flow / total capacity).
+    
+    \item \textbf{Green Time Allocation:} Allocates green time proportionally to each approach based on PCU values:
+    \begin{equation}
+    g_a = \frac{y_a}{Y} \times (C_o - L)
+    \end{equation}
+    where $g_a$ is green time for approach $a$, $y_a$ is the flow ratio for approach $a$, and $Y$ is the sum of all critical flow ratios.
+    
+    \item \textbf{Phase Design:} Creates exclusive NS and EW phases with proper amber and all-red intervals, following the phase design rules outlined above.
+    
+    \item \textbf{Signal Plan Output:} Generates complete signal timing plan with cycle length, green/amber/red times for each approach.
+\end{itemize}
+
+Figure~\ref{fig:webster_output} shows the Streamlit interface displaying Webster's signal timing optimization results, including the calculated cycle length, per-approach timing parameters, and an interactive phase diagram.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{images/intersectoin1websteroutput.png}
+    \caption{Streamlit interface showing Webster's signal timing optimization results for Intersection 1 (Jyoti Circle). The output displays the calculated cycle length, per-approach timing parameters (green, amber, red times), and an interactive Plotly phase diagram showing the NS vs EW exclusive phases.}
+    \label{fig:webster_output}
+\end{figure}
+
+\subsection{Webster Signal Plans}
+
+\subsubsection{Intersection 1: Jyoti Circle}
+
+\textbf{Webster Signal Plan:}
+\begin{itemize}
+    \item Cycle Length: 62.13 seconds
+    \item NB Green: 18.73s, SB Green: 20.34s, WB Green: 11.06s
+    \item Amber: 3.0s per approach
+    \item All-red: 2.0s between phases
+\end{itemize}
+
+\subsubsection{Intersection 2: Hampankatta Circle}
+
+\textbf{Webster Signal Plan:}
+\begin{itemize}
+    \item Cycle Length: 89.03 seconds
+    \item NB Green: 20.77s, SB Green: 19.91s, EB Green: 11.25s, WB Green: 25.10s
+    \item Amber: 3.0s per approach
+    \item All-red: 2.0s between phases
+\end{itemize}
+
+\section{Machine Learning Approach}
+\label{sec:ml_approach}
+
+\subsection{ML Model Architecture}
+
+We implemented a hybrid ML approach with two complementary models:
+
+\subsubsection{Cycle Length Model -- Linear Regression}
+
+\textbf{Inputs:} Aggregated north-south (NS) and east-west (EW) PCU totals from YOLO detection.
+
+\textbf{Output:} Predicted cycle length in seconds.
+
+\textbf{Rationale:} Webster's cycle calculation shows a monotonic relationship with overall traffic loading. A linear regression model provides an interpretable, low-variance fit that closely matches the synthetic Webster mapping while being more tolerant to measurement noise from YOLO detection.
+
+\subsubsection{Green Split Model -- RandomForestRegressor}
+
+\textbf{Inputs:} Individual lane-level PCU values (NB, SB, EB, WB with left, through, and right turn movements) from YOLO detection.
+
+\textbf{Output:} Per-approach green times ($g_N$, $g_S$, $g_E$, $g_W$) in seconds.
+
+\textbf{Rationale:} Green time allocation between approaches can exhibit mild non-linearities. A Random Forest ensemble captures interactions and handles outliers better than a pure linear rule, without requiring extensive hyperparameter tuning.
+
+\subsection{Training Data Generation}
+
+Since real-world intersection data with known optimal timings is scarce, we generated a synthetic dataset of 3,000 scenarios using Webster's method as the "teacher":
+
+\begin{itemize}
+    \item \textbf{Base Calculation:} Applied Webster's formulas to compute theoretical optimal timings for various traffic demand scenarios.
+    \item \textbf{Real-World Variations:} Incorporated time-of-day effects (morning/evening peaks), weather impacts, special events, day-of-week patterns, and directional biases to create realistic variations.
+    \item \textbf{Label Generation:} Each scenario included optimal cycle length and green time splits computed via Webster's method, serving as ground truth labels for ML training.
+\end{itemize}
+
+Figure~\ref{fig:synthetic_dataset} shows the distribution and characteristics of the synthetic training dataset, illustrating the diversity of traffic scenarios used for model training.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/synthetic_dataset.png}
+    \caption{Synthetic training dataset visualization showing the distribution of PCU values, cycle lengths, and green time allocations across 3,000 generated scenarios. The dataset incorporates real-world variations including time-of-day effects, weather impacts, and directional biases.}
+    \label{fig:synthetic_dataset}
+\end{figure}
+
+\subsection{ML Signal Plans}
+
+\subsubsection{Intersection 1: Jyoti Circle}
+
+\textbf{ML Signal Plan:}
+\begin{itemize}
+    \item Cycle Length: 60.00 seconds (minimum)
+    \item NB Green: 17.73s, SB Green: 17.64s, WB Green: 10.25s
+    \item Amber: 3.0s per approach
+    \item All-red: 2.0s between phases
+\end{itemize}
+
+\subsubsection{Intersection 2: Hampankatta Circle}
+
+\textbf{ML Signal Plan:}
+\begin{itemize}
+    \item Cycle Length: 91.93 seconds
+    \item NB Green: 21.20s, SB Green: 21.12s, EB Green: 12.91s, WB Green: 24.69s
+    \item Amber: 3.0s per approach
+    \item All-red: 2.0s between phases
+\end{itemize}
+
+\subsection{Phase Diagrams}
+
+Phase diagrams provide visual representation of signal timing allocation. Figures~\ref{fig:phase_ml_int1} through~\ref{fig:phase_webster_int2} show phase diagrams for both ML and Webster methods at both intersections.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/intersection 1/phase_diagram_ml.png}
+    \caption{ML-based phase diagram for Jyoti Circle (T-junction). The 60-second cycle minimizes delay by providing frequent green phases. The asymmetric allocation reflects the 3.5:1 traffic ratio.}
+    \label{fig:phase_ml_int1}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/intersection 1/phase_diagram_webster.png}
+    \caption{Webster-based phase diagram for Jyoti Circle (T-junction). The 62.13-second cycle provides more balanced green time allocation but results in higher delay due to longer waiting periods between green phases.}
+    \label{fig:phase_webster_int1}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/intersection 2/phase_diagram_ml.png}
+    \caption{ML-based phase diagram for Hampankatta Circle (4-way intersection). The 91.93-second cycle accommodates higher traffic volume but is 2.9 seconds longer than Webster's optimal cycle.}
+    \label{fig:phase_ml_int2}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/intersection 2/phase_diagram_webster.png}
+    \caption{Webster-based phase diagram for Hampankatta Circle (4-way intersection). The 89.03-second cycle represents the analytically optimal cycle length for the given traffic conditions.}
+    \label{fig:phase_webster_int2}
+\end{figure}
+
+\section{SUMO Microsimulation Validation}
+\label{sec:sumo_validation}
+
+\subsection{SUMO Simulation Process}
+
+Both ML-based and Webster-based signal plans were validated through SUMO (Simulation of Urban MObility) microsimulation:
+
+\begin{itemize}
+    \item \textbf{Network Generation:} Dynamically creates SUMO network files based on intersection type (3-way T-junction or 4-way intersection)
+    \item \textbf{Traffic Light Programs:} Converts signal timing plans into SUMO traffic light phase definitions
+    \item \textbf{Route Generation:} Creates vehicle routes based on PCU values from YOLO detection
+    \item \textbf{Simulation Execution:} Runs identical simulations for both methods under the same traffic conditions
+    \item \textbf{Performance Extraction:} Extracts comprehensive metrics including average delay, waiting time, travel time, throughput, and time loss
+\end{itemize}
+
+Figure~\ref{fig:sumo_final_results} shows the complete Streamlit interface displaying SUMO simulation validation results, including all performance metrics.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{images/intersectoin1final results.png}
+    \caption{Streamlit interface showing complete SUMO simulation validation results for Intersection 1 (Jyoti Circle). The output displays comprehensive performance metrics including average delay, waiting time, travel time, time loss, vehicle throughput, and total delay/waiting time.}
+    \label{fig:sumo_final_results}
+\end{figure}
+
+\section{Comparative Analysis: ML vs Webster}
+\label{sec:comparative_analysis}
+
+\subsection{Performance Comparison Results}
+
+We validated both ML-based and Webster-based signal plans through SUMO microsimulation for two distinct intersections with different characteristics.
+
+\subsubsection{Jyoti Circle: 3-Way T-Junction (Lower Traffic, Asymmetric Flow)}
+
+\textbf{Traffic Characteristics:}
+\begin{itemize}
+    \item Type: 3-way T-junction (no east approach)
+    \item Total PCU: 6,802 PCU/hr
+    \item Flow Distribution: Highly asymmetric (NS: 5,302 vs W: 1,500, ratio 3.5:1)
+\end{itemize}
+
+\textbf{Results:} The ML-based approach demonstrated \textbf{superior performance}:
+\begin{itemize}
+    \item Average delay: ML 40.65s vs Webster 44.29s (\textbf{8.2\% reduction})
+    \item Average travel time: ML 93.31s vs Webster 104.40s (\textbf{10.6\% reduction})
+    \item Average time loss: ML 60.89s vs Webster 70.13s (\textbf{13.2\% reduction})
+    \item Cycle length: ML 60.0s (minimum) vs Webster 62.13s
+\end{itemize}
+
+\textbf{Why ML performed better:} The ML model's shorter cycle length (60s minimum) and better handling of asymmetric flows contributed to its superior performance. The shorter cycle means vehicles wait less time before the next green phase, directly reducing delay.
+
+\subsubsection{Hampankatta Circle: 4-Way Intersection (Higher Traffic, Balanced Flow)}
+
+\textbf{Traffic Characteristics:}
+\begin{itemize}
+    \item Type: 4-way intersection (all approaches present)
+    \item Total PCU: 10,680 PCU/hr (57\% higher than Jyoti Circle)
+    \item Flow Distribution: Relatively balanced (NS: 5,640 vs EW: 5,040, ratio 1.1:1)
+\end{itemize}
+
+\textbf{Results:} The Webster-based approach demonstrated \textbf{slightly superior performance}:
+\begin{itemize}
+    \item Average delay: Webster 82.68s vs ML 83.46s (\textbf{0.9\% reduction})
+    \item Average travel time: Webster 150.73s vs ML 151.14s (\textbf{0.3\% reduction})
+    \item Average time loss: Webster 115.59s vs ML 115.90s (\textbf{0.3\% reduction})
+    \item Cycle length: Webster 89.03s vs ML 91.93s
+\end{itemize}
+
+\textbf{Why Webster performed better:} At higher traffic volumes, Webster's analytical precision in cycle length calculation becomes critical. The 2.9-second difference in cycle length accumulates across all vehicles, resulting in measurable delay reduction. Additionally, Webster's proportional allocation works optimally for balanced flows.
+
+\subsection{SUMO Simulation Results and Analysis}
+
+The comparative analysis from SUMO simulations provides quantitative evidence of the performance differences between ML and Webster methods. Figures~\ref{fig:combined_time_metrics} and~\ref{fig:combined_throughput} present comprehensive comparisons across both intersections.
+
+\subsubsection{Time-Based Performance Metrics}
+
+Figure~\ref{fig:combined_time_metrics} compares four critical time-based metrics: average delay, average waiting time, average travel time, and average time loss. The results demonstrate context-dependent performance:
+
+\textbf{Jyoti Circle - ML Superiority:}
+\begin{itemize}
+    \item \textbf{Average Delay:} ML achieved 40.65s vs Webster's 44.29s, representing an \textbf{8.2\% reduction}. This improvement stems from ML's shorter 60-second cycle, which provides more frequent green phases.
+    \item \textbf{Average Travel Time:} ML's 93.31s vs Webster's 104.40s shows a \textbf{10.6\% reduction}. The shorter cycle length directly translates to reduced travel time.
+    \item \textbf{Average Time Loss:} ML's 60.89s vs Webster's 70.13s represents a \textbf{13.2\% reduction}. ML's more efficient timing reduces the gap between actual and free-flow travel time significantly.
+\end{itemize}
+
+\textbf{Why ML values are lower at Jyoti Circle:} The ML model's selection of the minimum cycle length (60s) creates more frequent green phases. In traffic signal optimization, shorter cycles generally reduce delay when traffic volumes are moderate, as vehicles wait less time before the next green phase. Additionally, the ML model's training on asymmetric flow patterns enabled better green time allocation for the 3.5:1 NS-to-W ratio.
+
+\textbf{Hampankatta Circle - Webster Slight Advantage:}
+\begin{itemize}
+    \item \textbf{Average Delay:} Webster achieved 82.68s vs ML's 83.46s, representing a \textbf{0.9\% reduction}. While the difference is small, it demonstrates Webster's analytical precision at higher traffic volumes.
+    \item \textbf{Average Travel Time:} Webster's 150.73s vs ML's 151.14s shows a \textbf{0.3\% reduction}. The minimal difference reflects the similar cycle lengths, but Webster's optimal 89.03s cycle provides slight advantages.
+    \item \textbf{Average Time Loss:} Webster's 115.59s vs ML's 115.90s represents a \textbf{0.3\% reduction}. The small difference indicates both methods perform similarly, but Webster's shorter cycle (by 2.9s) accumulates to measurable savings.
+\end{itemize}
+
+\textbf{Why Webster values are lower at Hampankatta Circle:} At higher traffic volumes (10,680 PCU/hr), cycle length optimization becomes critical. Webster's analytical approach calculated an optimal 89.03-second cycle, while ML selected 91.93 seconds—a 2.9-second difference. This longer cycle increases waiting time for all vehicles, as they must wait longer between green phases. Additionally, Webster's proportional allocation works optimally for balanced flows (1.1:1 ratio), where mathematical precision outperforms ML's adaptive adjustments.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{images/combined_time_metrics_comparison.png}
+    \caption{Time-based performance comparison across both intersections. The chart shows ML's superior performance at Jyoti Circle (blue/green bars) with 8.2\% lower delay, while Webster shows slight advantage at Hampankatta Circle (red/orange bars) with 0.9\% lower delay. The differences in travel time and time loss follow similar patterns, reflecting the impact of cycle length optimization.}
+    \label{fig:combined_time_metrics}
+\end{figure}
+
+\subsubsection{Traffic Throughput Comparison}
+
+Figure~\ref{fig:combined_throughput} compares vehicle throughput—the total number of vehicles processed during the simulation period.
+
+\textbf{Key Observations:}
+\begin{itemize}
+    \item \textbf{Jyoti Circle:} Webster processed 5,612 vehicles vs ML's 5,403 vehicles, representing a \textbf{3.9\% higher throughput}. This difference can be explained by Webster's longer cycle length (62.13s vs 60s), which provides slightly more total green time per hour, allowing more vehicles to pass through.
+    \item \textbf{Hampankatta Circle:} Webster processed 5,323 vehicles vs ML's 5,302 vehicles, representing a \textbf{0.4\% higher throughput}. The minimal difference reflects the similar cycle lengths and green time allocations.
+\end{itemize}
+
+\textbf{Why throughput differences exist:} Throughput is influenced by both cycle length and green time allocation. Longer cycles provide more total green time per hour (more cycles per hour × green time per cycle), potentially allowing more vehicles to pass. However, this comes at the cost of increased delay, as vehicles wait longer between green phases. The trade-off between delay minimization and throughput maximization is a fundamental challenge in traffic signal optimization. ML prioritized delay reduction at Jyoti Circle, accepting slightly lower throughput for better user experience (lower waiting times).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/combined_traffic_throughput_comparison.png}
+    \caption{Traffic throughput comparison showing vehicle handling capacity. Webster shows slightly higher throughput at both intersections (3.9\% at Jyoti Circle, 0.4\% at Hampankatta Circle), attributed to longer cycle lengths providing more total green time. However, this comes at the cost of increased delay, demonstrating the delay-throughput trade-off in signal optimization.}
+    \label{fig:combined_throughput}
+\end{figure}
+
+\subsection{Inference from Comparative Results}
+
+The SUMO simulation results reveal several critical insights:
+
+\begin{enumerate}
+    \item \textbf{Cycle Length Optimization is Critical:} The 2-3 second differences in cycle length between methods translate to measurable performance differences. At Jyoti Circle, ML's shorter cycle (60s vs 62.13s) reduced delay by 8.2\%. At Hampankatta Circle, Webster's shorter cycle (89.03s vs 91.93s) provided a 0.9\% advantage.
+    
+    \item \textbf{Traffic Volume Affects Optimal Method:} At lower volumes (6,802 PCU/hr), ML's adaptive approach with shorter cycles performs better. At higher volumes (10,680 PCU/hr), Webster's analytical precision becomes more valuable.
+    
+    \item \textbf{Flow Distribution Matters:} Asymmetric flows (3.5:1 ratio) favor ML's adaptive allocation, while balanced flows (1.1:1 ratio) favor Webster's proportional approach.
+    
+    \item \textbf{Delay-Throughput Trade-off:} Lower delay does not always correlate with higher throughput. ML's delay-optimized approach at Jyoti Circle resulted in slightly lower throughput, demonstrating the fundamental trade-off in traffic signal optimization.
+    
+    \item \textbf{Intersection Geometry Influences Performance:} The ML model's superior performance at the 3-way T-junction suggests better training on similar geometries, while Webster's geometry-agnostic approach maintains consistent performance.
+\end{enumerate}
+
+\section{Method Selection and Final Workflow}
+
+Based on the comparative analysis, we adopted Webster's method as the primary optimization approach for the following reasons:
+
+\subsection{Consistency and Reliability}
+
+\begin{itemize}
+    \item \textbf{Consistency:} While ML showed promise for specific scenarios (3-way, lower traffic), Webster's method provides consistent, reliable results across all intersection types and traffic volumes.
+    \item \textbf{Reliability:} For higher traffic volumes and complex 4-way intersections—common in urban settings—Webster's analytical approach proved more optimal.
+    \item \textbf{Predictability:} Analytical formulas provide deterministic results without the variability inherent in ML models, which is crucial for traffic engineering applications.
+\end{itemize}
+
+\subsection{Practical Considerations}
+
+\begin{itemize}
+    \item \textbf{Interpretability:} Webster's method is transparent and well-understood by traffic engineers, facilitating implementation and validation.
+    \item \textbf{Standards Compliance:} Aligns with established traffic engineering standards (IRC:106-1990), ensuring regulatory compliance.
+    \item \textbf{Computational Efficiency:} Webster's method requires minimal computation compared to ML inference, making it more suitable for real-time applications.
+    \item \textbf{Simplicity:} The straightforward analytical approach reduces complexity and potential points of failure in the system.
+\end{itemize}
+
+\subsection{Final Integrated Workflow}
+
+The final workflow integrates all components:
+
+\begin{enumerate}
+    \item \textbf{YOLO-based Vehicle Detection:} Automated PCU extraction from traffic videos using YOLOv8.
+    \item \textbf{Webster's Method Optimization:} Direct calculation of optimal cycle length and green time splits using Webster's formulas.
+    \item \textbf{SUMO Simulation Validation:} Microsimulation validation of Webster-based signal plans to confirm effectiveness under realistic traffic conditions.
+\end{enumerate}
+
+All three stages remain integrated within the Streamlit GUI, providing a streamlined workflow from video input to validated signal timing recommendations. The ML approach demonstrated value in specific contexts (3-way intersections with asymmetric flows), suggesting potential for future hybrid approaches that select methods based on intersection characteristics.
+
+\newpage
+

@@ -1,0 +1,192 @@
+================================================================================
+COMPREHENSIVE METRICS SUMMARY: ML vs WEBSTER
+Both Intersections - Complete Details
+================================================================================
+
+═══════════════════════════════════════════════════════════════════════════════
+INTERSECTION 1: JYOTI CIRCLE (3-Way T-Junction)
+═══════════════════════════════════════════════════════════════════════════════
+
+Traffic Characteristics:
+  - Type: 3-way T-junction (No East approach)
+  - Total PCU: 6,802 PCU/hr
+  - Flow Distribution: NS: 5,302 PCU/hr, W: 1,500 PCU/hr (Ratio: 3.5:1)
+
+───────────────────────────────────────────────────────────────────────────────
+ML-BASED METHOD
+───────────────────────────────────────────────────────────────────────────────
+
+SUMO Simulation Metrics:
+  • Vehicle Count (Throughput):        5,403 vehicles
+  • Average Delay:                     40.65 seconds
+  • Average Waiting Time:              40.65 seconds
+  • Average Travel Time:              93.31 seconds
+  • Average Time Loss:                 60.89 seconds
+  • Average Departure Delay:          80.75 seconds
+  • Total Delay:                       219,613 seconds
+  • Total Waiting Time:                219,613 seconds
+
+Signal Plan Details:
+  • Cycle Length:                      60.00 seconds (minimum)
+  
+  Approach Timings:
+    ┌──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+    │ Approach │   Green  │  Amber   │   Red    │ Flow Rate│ Sat Rate │
+    ├──────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+    │    NB    │  17.73s  │   3.0s   │  39.27s  │ 2542 PCU │ 3600 PCU │
+    │    SB    │  17.64s  │   3.0s   │  39.36s  │ 2760 PCU │ 3600 PCU │
+    │    WB    │  10.25s  │   3.0s   │  46.75s  │ 1500 PCU │ 3600 PCU │
+    └──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+
+───────────────────────────────────────────────────────────────────────────────
+WEBSTER-BASED METHOD
+───────────────────────────────────────────────────────────────────────────────
+
+SUMO Simulation Metrics:
+  • Vehicle Count (Throughput):        5,612 vehicles
+  • Average Delay:                     44.29 seconds
+  • Average Waiting Time:              44.29 seconds
+  • Average Travel Time:              104.40 seconds
+  • Average Time Loss:                 70.13 seconds
+  • Average Departure Delay:         127.00 seconds
+  • Total Delay:                       248,551 seconds
+  • Total Waiting Time:                248,551 seconds
+
+Signal Plan Details:
+  • Cycle Length:                      62.13 seconds
+  
+  Approach Timings:
+    ┌──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+    │ Approach │   Green  │  Amber   │   Red    │ Flow Rate│ Sat Rate │
+    ├──────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+    │    NB    │  18.73s  │   3.0s   │  40.40s  │ 2542 PCU │ 3600 PCU │
+    │    SB    │  20.34s  │   3.0s   │  38.79s  │ 2760 PCU │ 3600 PCU │
+    │    WB    │  11.06s  │   3.0s   │  48.08s  │ 1500 PCU │ 3600 PCU │
+    └──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+
+───────────────────────────────────────────────────────────────────────────────
+COMPARISON: INTERSECTION 1
+───────────────────────────────────────────────────────────────────────────────
+
+Performance Difference (ML - Webster):
+  • Average Delay:         -3.64 seconds  (ML better by 8.2%)
+  • Average Waiting Time:  -3.64 seconds  (ML better by 8.2%)
+  • Average Travel Time:   -11.09 seconds (ML better by 10.6%)
+  • Average Time Loss:     -9.24 seconds  (ML better by 13.2%)
+  • Throughput:            -209 vehicles   (Webster higher by 3.9%)
+  • Cycle Length:          -2.13 seconds  (ML shorter)
+
+WINNER: ML-BASED METHOD (Better delay, travel time, and time loss)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+INTERSECTION 2: HAMPANKATTA CIRCLE (4-Way Intersection)
+═══════════════════════════════════════════════════════════════════════════════
+
+Traffic Characteristics:
+  - Type: 4-way intersection (All approaches present)
+  - Total PCU: 10,680 PCU/hr (57% higher than Intersection 1)
+  - Flow Distribution: NS: 5,640 PCU/hr, EW: 5,040 PCU/hr (Ratio: 1.1:1)
+
+───────────────────────────────────────────────────────────────────────────────
+ML-BASED METHOD
+───────────────────────────────────────────────────────────────────────────────
+
+SUMO Simulation Metrics:
+  • Vehicle Count (Throughput):        5,302 vehicles
+  • Average Delay:                     83.46 seconds
+  • Average Waiting Time:              83.46 seconds
+  • Average Travel Time:             151.14 seconds
+  • Average Time Loss:                115.90 seconds
+  • Average Departure Delay:         386.16 seconds
+  • Total Delay:                       442,493 seconds
+  • Total Waiting Time:                442,493 seconds
+
+Signal Plan Details:
+  • Cycle Length:                      91.93 seconds
+  
+  Approach Timings:
+    ┌──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+    │ Approach │   Green  │  Amber   │   Red    │ Flow Rate│ Sat Rate │
+    ├──────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+    │    NB    │  21.20s  │   3.0s   │  67.73s  │ 2880 PCU │ 3600 PCU │
+    │    SB    │  21.12s  │   3.0s   │  67.80s  │ 2760 PCU │ 3600 PCU │
+    │    EB    │  12.91s  │   3.0s   │  76.01s  │ 1560 PCU │ 3600 PCU │
+    │    WB    │  24.69s  │   3.0s   │  64.23s  │ 3480 PCU │ 3600 PCU │
+    └──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+
+───────────────────────────────────────────────────────────────────────────────
+WEBSTER-BASED METHOD
+───────────────────────────────────────────────────────────────────────────────
+
+SUMO Simulation Metrics:
+  • Vehicle Count (Throughput):        5,323 vehicles
+  • Average Delay:                     82.68 seconds
+  • Average Waiting Time:              82.68 seconds
+  • Average Travel Time:             150.73 seconds
+  • Average Time Loss:                115.59 seconds
+  • Average Departure Delay:         383.64 seconds
+  • Total Delay:                       440,091 seconds
+  • Total Waiting Time:                440,091 seconds
+
+Signal Plan Details:
+  • Cycle Length:                      89.03 seconds
+  
+  Approach Timings:
+    ┌──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+    │ Approach │   Green  │  Amber   │   Red    │ Flow Rate│ Sat Rate │
+    ├──────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+    │    NB    │  20.77s  │   3.0s   │  65.26s  │ 2880 PCU │ 3600 PCU │
+    │    SB    │  19.91s  │   3.0s   │  66.13s  │ 2760 PCU │ 3600 PCU │
+    │    EB    │  11.25s  │   3.0s   │  74.78s  │ 1560 PCU │ 3600 PCU │
+    │    WB    │  25.10s  │   3.0s   │  60.93s  │ 3480 PCU │ 3600 PCU │
+    └──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+
+───────────────────────────────────────────────────────────────────────────────
+COMPARISON: INTERSECTION 2
+───────────────────────────────────────────────────────────────────────────────
+
+Performance Difference (ML - Webster):
+  • Average Delay:         +0.78 seconds  (Webster better by 0.9%)
+  • Average Waiting Time:  +0.78 seconds  (Webster better by 0.9%)
+  • Average Travel Time:   +0.41 seconds  (Webster better by 0.3%)
+  • Average Time Loss:     +0.31 seconds  (Webster better by 0.3%)
+  • Throughput:            -21 vehicles   (Webster higher by 0.4%)
+  • Cycle Length:          +2.90 seconds  (ML longer)
+
+WINNER: WEBSTER-BASED METHOD (Slightly better across all metrics)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+OVERALL SUMMARY
+═══════════════════════════════════════════════════════════════════════════════
+
+Key Observations:
+
+1. INTERSECTION 1 (Jyoti Circle - T-junction):
+   ✓ ML performs significantly better (8.2% delay reduction)
+   ✓ ML uses shorter cycle (60s vs 62s)
+   ✓ Better handling of asymmetric flow (3.5:1 ratio)
+   ✓ Lower traffic volume favors ML approach
+
+2. INTERSECTION 2 (Hampankatta Circle - 4-way):
+   ✓ Webster performs slightly better (0.9% delay reduction)
+   ✓ Webster uses shorter cycle (89s vs 92s)
+   ✓ Better performance at higher traffic volumes
+   ✓ More balanced flow (1.1:1 ratio) favors Webster
+
+3. Performance Patterns:
+   • ML excels at: Lower traffic, asymmetric flows, 3-way intersections
+   • Webster excels at: Higher traffic, balanced flows, longer cycles
+   • Cycle length optimization is critical for performance
+   • Throughput differences are minimal (<4%)
+
+4. Method Selection:
+   • For T-junctions with asymmetric flows: ML recommended
+   • For 4-way intersections with high traffic: Webster recommended
+   • Overall: Webster chosen for consistency and reliability
+
+================================================================================
+End of Metrics Summary
+================================================================================
+

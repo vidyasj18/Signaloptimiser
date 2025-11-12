@@ -999,50 +999,76 @@ def main():
         )
 
         st.markdown("---")
-        col_test, col_calc = st.columns(2)
         
-        with col_test:
-            if st.button("🧪 Load Test Data (Skip YOLO)", type="secondary", key="btn_load_test_data"):
-                # Hardcoded test data matching intersection_summary.json structure
-                test_summary = {
-                    "NB": {
-                        "total_pcu": 2880.0,
-                        "vehicle_counts": {"car": 2500, "truck": 100, "bus": 20, "motorcycle": 200},
-                        "duration": 3600.0
-                    },
-                    "SB": {
-                        "total_pcu": 2760.0,
-                        "vehicle_counts": {"car": 2400, "truck": 80, "bus": 15, "motorcycle": 180},
-                        "duration": 3600.0
-                    },
-                    "EB": {
-                        "total_pcu": 1560.0,
-                        "vehicle_counts": {"car": 1400, "truck": 40, "bus": 10, "motorcycle": 100},
-                        "duration": 3600.0
-                    },
-                    "WB": {
-                        "total_pcu": 3480.0,
-                        "vehicle_counts": {"car": 3000, "truck": 120, "bus": 25, "motorcycle": 250},
+        # Intersection Template Testing Section
+        st.markdown("### 🧪 Test Intersection Templates")
+        col_int1, col_int2 = st.columns(2)
+        
+        def run_intersection_template(intersection_num: int, pcu_dict: dict, intersection_name: str):
+            """Run complete pipeline for an intersection template: Webster + SUMO + Display results"""
+            # Convert to format expected by the app
+            test_summary = {}
+            test_totals = {}
+            for appr_code, pcu_val in pcu_dict.items():
+                appr_name = {"N": "NB", "S": "SB", "E": "EB", "W": "WB"}.get(appr_code, appr_code)
+                if pcu_val > 0:
+                    test_summary[appr_name] = {
+                        "total_pcu": float(pcu_val),
+                        "vehicle_counts": {"car": int(pcu_val * 0.85), "motorcycle": int(pcu_val * 0.1), 
+                                         "bus": int(pcu_val * 0.03), "truck": int(pcu_val * 0.02)},
                         "duration": 3600.0
                     }
-                }
-                
-                test_totals = {appr: float(data["total_pcu"]) for appr, data in test_summary.items()}
-                
-                adaptive_state["pcu"] = test_summary
-                adaptive_state["pcu_totals"] = test_totals
-                adaptive_state["plan"] = None
-                adaptive_state["sumo"] = None
-                st.session_state.adaptive_state = adaptive_state
-                
-                # Save to file
-                os.makedirs('outputs', exist_ok=True)
-                with open('outputs/intersection_summary.json', 'w', encoding='utf-8') as f:
-                    json.dump(test_summary, f, ensure_ascii=False, indent=2)
-                
-                st.success("✅ Test data loaded! PCU values: " + str({appr: round(val, 2) for appr, val in test_totals.items()}))
-                st.info("You can now proceed to 'Generate Webster Plan' and 'Run SUMO Simulation' buttons.")
+                    test_totals[appr_name] = float(pcu_val)
+            
+            # Update session state
+            adaptive_state["pcu"] = test_summary
+            adaptive_state["pcu_totals"] = test_totals
+            
+            # Save to file
+            os.makedirs('outputs', exist_ok=True)
+            with open('outputs/intersection_summary.json', 'w', encoding='utf-8') as f:
+                json.dump(test_summary, f, ensure_ascii=False, indent=2)
+            
+            # Generate Webster plan
+            with st.spinner(f"Generating Webster plan for {intersection_name}..."):
+                plan = webster.compute_webster_plan(pcu_override=test_totals)
+            adaptive_state["plan"] = plan
+            
+            # Run SUMO simulation
+            with st.spinner(f"Running SUMO simulation for {intersection_name}..."):
+                try:
+                    sumo_results = sumo_simulation.run_webster_pipeline(
+                        pcu_override=test_totals,
+                        run_sumo=True,
+                        use_gui=False,
+                    )
+                    adaptive_state["sumo"] = sumo_results
+                except Exception as e:
+                    st.error(f"Error running SUMO simulation: {e}")
+                    st.warning("SUMO simulation failed. Check console for details.")
+                    adaptive_state["sumo"] = None
+            
+            # Update session state
+            st.session_state.adaptive_state = adaptive_state
+            
+            st.success(f"✅ {intersection_name} analysis complete! See results below.")
         
+        with col_int1:
+            if st.button("📍 Test Intersection 1 Template\n(Jyoti Circle - T-junction)", 
+                        type="primary", key="btn_test_int1", use_container_width=True):
+                # Intersection 1: Jyoti Circle (T-junction) - NB, SB, WB only
+                pcu_dict = {"N": 2542.0, "S": 2760.0, "E": 0.0, "W": 1500.0}
+                run_intersection_template(1, pcu_dict, "Jyoti Circle (T-junction)")
+        
+        with col_int2:
+            if st.button("📍 Test Intersection 2 Template\n(Hampankatta Circle - 4-way)", 
+                        type="primary", key="btn_test_int2", use_container_width=True):
+                # Intersection 2: Hampankatta Circle (4-way) - All approaches
+                pcu_dict = {"N": 2880.0, "S": 2760.0, "E": 1560.0, "W": 3480.0}
+                run_intersection_template(2, pcu_dict, "Hampankatta Circle (4-way)")
+        
+        st.markdown("---")
+        col_calc = st.columns(1)[0]
         with col_calc:
             if st.button("📊 Calculate PCUs (full video)", type="primary", key="btn_calc_pcu"):
                 totals = {}
