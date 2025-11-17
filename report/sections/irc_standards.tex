@@ -1,438 +1,82 @@
 \chapter{IRC Standards and Assumptions}
 \label{ch:irc_standards}
 
-This project follows Indian Roads Congress (IRC) standards for traffic engineering and signal optimization. This chapter lists the specific standards, tables, formulas, and assumptions we’ve used.
+The system is anchored to Indian Roads Congress guidance to ensure every number in the workflow can be defended. Only the clauses we actually relied on are summarized below; unused portions of the IRC manuals are intentionally left out so the chapter stays focused.
 
-\section{IRC:106-1990 - Guidelines for Capacity of Urban Roads in Plain Areas}
-\label{sec:irc_106}
+\section{Core References}
+\begin{itemize}
+    \item \textbf{IRC:106-1990}: Passenger Car Unit (PCU) definitions for mixed traffic.
+    \item \textbf{IRC SP:41}: Webster timing equations, saturation flow, and lost time guidance.
+\end{itemize}
 
-\subsection{Document Overview}
+\section{PCU Conversion Factors}
 
-IRC:106-1990, “Guidelines for Capacity of Urban Roads in Plain Areas,” provides capacity guidance for urban roads. First published in November 1990, reprinted in April 2007 and March 2016~\cite{IRC106}.
-
-\subsection{Passenger Car Unit (PCU) Conversion Factors}
-
-The fundamental basis for traffic volume assessment in this project is derived from IRC:106-1990, Section 7, titled "Passenger Car Units". The standard states:
-
-\begin{quote}
-\textit{"Urban roads are characterised by mixed traffic conditions, resulting in complex interaction between various kinds of vehicles. To cater to this, it is usual to express the capacity of urban roads in terms of a common unit. The unit generally employed is the 'Passenger Car Unit' (PCU), and each vehicle type is converted into equivalent PCUs based on their relative interference value."} (Section 7.1, IRC:106-1990)
-\end{quote}
-
-\subsubsection{PCU Conversion Table}
-
-This project adopts Table 1 from IRC:106-1990 (Section 7.2), which provides recommended PCU factors considering that these factors are "predominantly a function of the physical dimensions of the various vehicles" and are also "affected to a certain extent by increase in its proportion in the total traffic."
-
-\begin{table}[h]
+YOLO detections are converted to PCUs using the IRC:106 ranges but collapsed to the values we actually deploy in the pipeline:
+\begin{table}[H]
 \centering
-\caption{Recommended PCU Factors for Various Types of Vehicles on Urban Roads (IRC:106-1990, Table 1)}
+\caption{PCU factors applied in the project (derived from IRC:106 Table 1)}
 \label{tab:irc_pcu_factors}
-\begin{tabular}{|l|c|c|}
+\begin{tabular}{|l|c|}
 \hline
-\textbf{Vehicle Type} & \multicolumn{2}{c|}{\textbf{Equivalent PCU Factors}} \\
-\cline{2-3}
- & \multicolumn{2}{c|}{\textbf{Percentage composition of Vehicle type in traffic stream}} \\
-\cline{2-3}
- & \textbf{5\%} & \textbf{10\% and above} \\
+\textbf{Vehicle type} & \textbf{PCU used} \\
 \hline
-\multicolumn{3}{|l|}{\textbf{Fast Vehicles}} \\
-\hline
-1. Two wheelers (Motor cycle or scooter etc.) & 0.5 & 0.75 \\
-\hline
-2. Passenger car, pick-up van & 1.0 & 1.0 \\
-\hline
-3. Auto-rickshaw & 1.2 & 2.0 \\
-\hline
-4. Light commercial vehicle & 1.4 & 2.0 \\
-\hline
-5. Truck or Bus & 2.2 & 3.7 \\
-\hline
-6. Agricultural Tractor Trailer & 4.0 & 5.0 \\
-\hline
-\multicolumn{3}{|l|}{\textbf{Slow Vehicles}} \\
-\hline
-7. Cycle & 0.4 & 0.5 \\
-\hline
-8. Cycle rickshaw & 1.5 & 2.0 \\
-\hline
-9. Tonga (Horse drawn vehicle) & 1.5 & 2.0 \\
-\hline
-10. Hand cart & 2.0 & 3.0 \\
+Two-wheeler & 0.5 \\
+Passenger car & 1.0 \\
+Bus & 3.0 \\
+Truck & 3.0 \\
 \hline
 \end{tabular}
 \end{table}
+These values feed both Webster calculations and the SUMO route generation logic.
 
-\subsection{Application in This Project}
+\section{Signal Timing Formulas Used}
 
-In this project, the YOLOv8-based vehicle detection system classifies vehicles into multiple categories (cars, buses, two-wheelers, trucks). These detected counts are converted into PCUs using the factors from Table~\ref{tab:irc_pcu_factors}. The specific PCU values used are:
+Only three IRC SP:41 equations are part of the automation stack:
+\begin{align}
+C_o &= \frac{1.5L + 5}{1 - Y} &&\text{(optimum cycle length)} \label{eq:webster_cycle}\\
+G_e &= C_o - L &&\text{(effective green time)} \label{eq:effective_green}\\
+g_a &= \frac{y_a}{Y}(C_o - L) &&\text{(per-approach green allocation)} \label{eq:green_allocation}
+\end{align}
+where $Y$ is the sum of critical flow ratios and $y_a$ is the flow ratio of approach $a$.
 
+\section{Adopted Timing Assumptions}
+
+Directly from IRC SP:41, Section 7.6:
 \begin{itemize}
-    \item \textbf{Two-wheeler (Motorcycle/Scooter):} PCU = 0.5
-    \item \textbf{Car (Passenger car):} PCU = 1.0
-    \item \textbf{Bus:} PCU = 3.0 (averaged for simplicity, based on composition)
-    \item \textbf{Truck:} PCU = 3.0 (averaged for simplicity, based on composition)
+    \item Amber = 3 s, all-red = 2 s $\Rightarrow$ lost time $L = 12$ s for two-phase operation.
+    \item Base saturation flow = 1,800 PCU/h/lane (simplified from $s = 525W$ for widths 5.5-18 m).
+    \item Practical cycle bounds used in the code: 60 s $\leq C_o \leq$ 120 s.
 \end{itemize}
 
-\subsection{Design Service Volumes and Level of Service}
+\section{Where Each Standard Shows Up}
 
-IRC:106-1990 defines Level of Service (LOS) as "a qualitative measure describing operational conditions within a traffic stream, based on service measures such as speed, travel time, freedom to manoeuvre, traffic interruptions, comfort and convenience" (Section 5.1).
-
-The standard recommends (Section 8.1):
-
-\begin{quote}
-\textit{"Considering the need for smooth traffic flow, it is not advisable to design the road cross-sections for traffic volumes equal to the maximum capacity which will become available normally at LOS E... As a compromise solution, it is recommended that normally LOS C be adopted for design of urban roads. At this level, volume of traffic will be around 0.70 times the maximum capacity and this is taken as the 'design services volume' for the purpose of adopting design values."}
-\end{quote}
-
-\subsection{Recommended Design Service Volumes}
-
-IRC:106-1990, Section 8.3, Table 2 provides recommended design service volumes for different categories of urban roads:
-
-\begin{table}[h]
+\begin{table}[H]
 \centering
-\caption{Recommended Design Service Volumes - PCUs Per Hour (IRC:106-1990, Table 2)}
-\label{tab:irc_design_volumes}
-\begin{tabular}{|l|l|c|c|c|}
-\hline
-\textbf{S. No.} & \textbf{Type of Carriageway} & \textbf{Arterial*} & \textbf{Sub-arterial**} & \textbf{Collector***} \\
-\hline
-1. & 2-Lane (One-Way) & 2400 & 1900 & 1400 \\
-\hline
-2. & 2-Lane (Two-Way) & 1500 & 1200 & 900 \\
-\hline
-3. & 3-Lane (One-Way) & 3600 & 2900 & 2200 \\
-\hline
-4. & 4-Lane Undivided (Two-Way) & 3000 & 2400 & 1800 \\
-\hline
-5. & 4-Lane Divided (Two-Way) & 3600 & 2900 & - \\
-\hline
-6. & 6-Lane Undivided (Two-Way) & 4800 & 3800 & - \\
-\hline
-7. & 6-Lane Divided (Two-Way) & 5400 & 4300 & - \\
-\hline
-8. & 8-Lane Divided (Two-Way) & 7200 & - & - \\
-\hline
-\end{tabular}
-\end{table}
-
-\footnotesize{
-\begin{itemize}
-    \item[*] Roads with no frontage access, no standing vehicles, very little cross traffic.
-    \item[**] Roads with frontage access but no standing vehicles and high capacity intersections.
-    \item[***] Roads with free frontage access, parked vehicles and heavy cross traffic.
-\end{itemize}
-}
-\normalsize
-
-\subsection{Peak Hour Factor}
-
-As per IRC:106-1990, Section 6.1:
-
-\begin{quote}
-\textit{"The urban peak hour traffic constitutes about 8-10 per cent of the total daily traffic depending on various factors including the importance of the road in the network."}
-\end{quote}
-
-Section 6.3 further states:
-
-\begin{quote}
-\textit{"A design period of 15-20 years should be adopted for arterials and sub-arterials, and 10-15 years for collector and local streets."}
-\end{quote}
-
-\section{IRC SP:41 - Guidelines for the Design of At-Grade Intersections in Rural and Urban Areas}
-\label{sec:irc_sp41}
-
-\subsection{Document Overview}
-
-IRC SP:41 titled "Guidelines for the Design of At-Grade Intersections in Rural and Urban Areas" provides comprehensive guidelines for intersection design, signal timing, and capacity analysis~\cite{IRCSP41}.
-
-\subsection{Signal Timing Formulas}
-
-\subsubsection{Webster's Optimum Cycle Time Formula}
-
-The fundamental formula for calculating optimum cycle length is derived from IRC SP:41, Section H(23):
-
-\begin{equation}
-C_o = \frac{1.5L + 5}{1 - Y}
-\label{eq:webster_cycle}
-\end{equation}
-
-Where:
-\begin{itemize}
-    \item $C_o$ = Optimum cycle time (seconds)
-    \item $L$ = Total lost time per cycle (seconds)
-    \item $Y$ = Sum of critical flow ratios (ratio of flow to saturation flow for all phases)
-\end{itemize}
-
-\subsubsection{Effective Green Time Calculation}
-
-The effective green time for each phase is calculated as:
-
-\begin{equation}
-G_e = C_o - L
-\label{eq:effective_green}
-\end{equation}
-
-Where:
-\begin{itemize}
-    \item $G_e$ = Total effective green time available (seconds)
-    \item $C_o$ = Optimum cycle time (seconds)
-    \item $L$ = Total lost time per cycle (seconds)
-\end{itemize}
-
-\subsubsection{Green Time Allocation}
-
-Green time for each approach is allocated proportionally based on traffic demand:
-
-\begin{equation}
-g_a = \frac{y_a}{Y} \times (C_o - L)
-\label{eq:green_allocation}
-\end{equation}
-
-Where:
-\begin{itemize}
-    \item $g_a$ = Green time allocated to approach 'a' (seconds)
-    \item $y_a$ = Flow ratio for approach 'a' (flow/saturation flow)
-    \item $Y$ = Sum of all critical flow ratios
-    \item $C_o$ = Optimum cycle time (seconds)
-    \item $L$ = Total lost time per cycle (seconds)
-\end{itemize}
-
-\subsection{Saturation Flow Rate}
-
-IRC SP:41, Section 7.6.1.1 defines saturation flow as:
-
-\begin{quote}
-\textit{"The saturation flow is the flow which would be obtained if there is a continuous queue of vehicles and they were given 100 per cent green time. It is generally expressed in vehicles per hour of green time."}
-\end{quote}
-
-The basic saturation flow formula (Section 7.6.1.1) is:
-
-\begin{equation}
-s = 525 \times W \text{ PCU/hour}
-\label{eq:saturation_flow}
-\end{equation}
-
-Where:
-\begin{itemize}
-    \item $s$ = saturation flow (vehicle per hr)
-    \item $W$ = width of approach road (in m, measured from kerb to the inside of the central median or centre of the approach whichever is nearer)
-\end{itemize}
-
-The standard notes: "This expression is valid for widths from 5.5 m to 18 m."
-
-\subsection{Lost Time Assumptions}
-
-IRC SP:41, Section 7.6.2 defines lost time:
-
-\begin{quote}
-\textit{"Lost time: It is the time during which no flow takes place. It may be:"}
-\begin{enumerate}
-    \item \textit{"Theoretical lost time per cycle (L) = The sum of lost time in each phase and this period with of signal shows red or red and amber. It can be expressed by,"}
-    
-    $L = nI_a$
-    
-    Where $n$ = number of phases
-    
-    $I_a$ = average lost time per phase (adding up all red periods or suppose amber)
-    
-    \item \textit{"Physical lost time for the average signals cycle the lost time caused by starting delays and reduced flow during the amber period amounts to about 2 seconds per phase."}
-\end{enumerate}
-\end{quote}
-
-\subsection{Project-Specific Assumptions}
-
-Based on IRC SP:41 guidelines, this project adopts the following standard timing assumptions:
-
-\begin{itemize}
-    \item \textbf{Amber Time:} 3 seconds per phase
-    \item \textbf{All-Red Time:} 2 seconds per phase (for clearance)
-    \item \textbf{Total Lost Time per Phase:} 5 seconds (start-up loss + clearance)
-    \item \textbf{Total Lost Time (L):} 12 seconds for two-phase operation (2 phases × 6 seconds)
-    \item \textbf{Base Saturation Flow:} 1800 PCU/hour per lane (simplified from 525W formula)
-    \item \textbf{Minimum Cycle Length:} 60 seconds (practical lower limit)
-    \item \textbf{Maximum Cycle Length:} 120 seconds (to avoid excessive delays)
-\end{itemize}
-
-\subsection{Minimum Cycle Length Recommendation}
-
-IRC SP:41, Section 7.6.3.2 states:
-
-\begin{quote}
-\textit{"The minimum cycle length recommended is preferably 120 seconds being the maximum acceptable delay for drivers of vehicles and pedestrians."}
-\end{quote}
-
-However, the document also notes that minimum cycle length could be as low as:
-
-\begin{equation}
-C_o = (1.5L + 5)(1 - Y)^{-1} \text{ seconds}
-\end{equation}
-
-Where practical constraints and driver psychology suggest 60 seconds as a reasonable minimum.
-
-\subsection{Webster's Average Delay Formula}
-
-IRC SP:41 provides Webster's delay formula for calculating average vehicle delay at signalized intersections:
-
-\begin{equation}
-d = \frac{C(1-\lambda)^2}{2(1-y)} + \frac{x^2}{2q(1-x)}
-\label{eq:webster_delay}
-\end{equation}
-
-Where:
-\begin{itemize}
-    \item $d$ = average delay per vehicle (seconds)
-    \item $C$ = cycle time (seconds)
-    \item $\lambda$ = effective green time ratio (g/C)
-    \item $y$ = flow ratio (q/s)
-    \item $x$ = degree of saturation (q/capacity)
-    \item $q$ = flow rate (vehicles per hour)
-\end{itemize}
-
-A simplified version commonly used is:
-
-\begin{equation}
-d = \frac{C(1 - g/C)^2}{2(1 - y)} = \frac{C(1 - \lambda)^2}{2(1 - qC/gs)}
-\label{eq:webster_delay_simple}
-\end{equation}
-
-\subsection{Intersection Capacity}
-
-IRC SP:41, Section 7.6 defines intersection capacity as:
-
-\begin{quote}
-\textit{"Capacity = (g × s)/C vehicles per hr"}
-\end{quote}
-
-Where:
-\begin{itemize}
-    \item $g$ = effective green time per cycle (in seconds)
-    \item $s$ = the saturation flow (vehicle per hr)
-    \item $C$ = cycle time in seconds
-\end{itemize}
-
-\subsection{Signal Phase Design}
-
-IRC SP:41, Section 7.5 discusses signal design and phase configuration:
-
-\begin{quote}
-\textit{"Determination of cycle lengths and green periods in signal phasing alongwith typical design of signal timings are discussed in Section H(23) of IRC: 93-1985."}
-\end{quote}
-
-The standard recommends proper phase sequencing with:
-\begin{itemize}
-    \item Green phase (actual movement)
-    \item Amber phase (warning, 3 seconds)
-    \item Red phase (stop)
-    \item All-red phase (clearance, typically 2 seconds)
-\end{itemize}
-
-\section{Integration with Machine Learning Models}
-\label{sec:irc_ml_integration}
-
-\subsection{Synthetic Dataset Generation}
-
-The synthetic dataset for training ML models was generated using IRC-compliant formulas:
-
-\begin{enumerate}
-    \item \textbf{Base Traffic Generation:} Random PCU values generated for each approach (N, S, E, W) ranging from 100 to 4000 PCU, representing varied traffic conditions from low to very high demand.
-    
-    \item \textbf{Flow Ratio Calculation:} For each approach, flow ratio calculated as:
-    \begin{equation}
-    y_a = \frac{q_a}{s_a}
-    \end{equation}
-    where $q_a$ is the arrival flow rate (PCU/hr) and $s_a$ is saturation flow (1800 PCU/hr/lane).
-    
-    \item \textbf{Cycle Time Calculation:} Using Webster's formula (Equation~\ref{eq:webster_cycle}) with IRC-compliant lost time values.
-    
-    \item \textbf{Green Time Allocation:} Using proportional allocation (Equation~\ref{eq:green_allocation}) based on IRC SP:41 guidelines.
-    
-    \item \textbf{Delay Calculation:} Using Webster's delay formula (Equation~\ref{eq:webster_delay_simple}) with IRC-compliant parameters.
-\end{enumerate}
-
-\subsection{Real-World Adjustments}
-
-While the base calculations follow IRC standards strictly, the ML models are trained on datasets that include real-world variations:
-
-\begin{itemize}
-    \item \textbf{Time-of-day effects:} Peak hours (0.8-1.2× base saturation flow)
-    \item \textbf{Weather impacts:} Reduced saturation flow during adverse weather (0.7-0.85× base)
-    \item \textbf{Special events:} Traffic surges (1.15-1.4× base demand)
-    \item \textbf{Day-of-week patterns:} Weekend vs. weekday variations (0.8-1.0× base)
-    \item \textbf{Directional bias:} Realistic unbalanced flows per IRC observations
-\end{itemize}
-
-These adjustments ensure that while the fundamental engineering principles remain IRC-compliant, the ML models learn to adapt to real-world variations not captured by deterministic formulas.
-
-\section{SUMO Simulation Parameters}
-\label{sec:irc_sumo}
-
-The SUMO microsimulation validation uses IRC-compliant parameters:
-
-\begin{itemize}
-    \item \textbf{PCU Conversion:} Vehicle generation rates based on Table~\ref{tab:irc_pcu_factors}
-    \item \textbf{Signal Timings:} Both Webster-based and ML-based plans use IRC-compliant cycle times, green splits, amber, and all-red periods
-    \item \textbf{Saturation Flow:} Network capacity calibrated to approximate 1800 PCU/hour/lane as per IRC standards
-    \item \textbf{Performance Metrics:} Average delay, throughput, and LOS assessment aligned with IRC definitions
-\end{itemize}
-
-\section{Compliance Summary}
-\label{sec:irc_compliance}
-
-This project ensures full compliance with IRC standards:
-
-\begin{table}[h]
-\centering
-\caption{IRC Standards Compliance Matrix}
+\caption{IRC compliance touchpoints in the implementation}
 \label{tab:irc_compliance}
-\begin{tabular}{|p{5cm}|p{4cm}|p{5cm}|}
+\begin{tabular}{|l|l|}
 \hline
-\textbf{IRC Standard} & \textbf{Section/Table} & \textbf{Application in Project} \\
+\textbf{Guidance} & \textbf{Usage} \\
 \hline
-IRC:106-1990 Table 1 & PCU Factors & YOLO vehicle count to PCU conversion \\
+IRC:106 PCU factors & YOLO count $\rightarrow$ PCU conversion, SUMO demand generation \\
 \hline
-IRC:106-1990 Section 6.1 & Peak Hour Factor & 8-10\% of daily traffic \\
+IRC SP:41 Webster formulas & Cycle length and per-phase green calculations (Section~\ref{eq:webster_cycle}--\ref{eq:green_allocation}) \\
 \hline
-IRC:106-1990 Section 8.1 & LOS C for Design & Design service volume = 0.70 × capacity \\
+IRC SP:41 lost time & Fixed amber/all-red durations in both Webster and ML signal plans \\
 \hline
-IRC SP:41 Section H(23) & Webster's Cycle Formula & Optimum cycle time calculation \\
-\hline
-IRC SP:41 Section 7.6.1.1 & Saturation Flow & Base: 1800 PCU/hr/lane \\
-\hline
-IRC SP:41 Section 7.6.2 & Lost Time & 12 seconds total per 2-phase cycle \\
-\hline
-IRC SP:41 Signal Timing & Amber \& All-Red & 3s amber + 2s all-red per phase \\
-\hline
-IRC SP:41 Webster's Delay & Average Delay Formula & Performance metric calculation \\
+IRC SP:41 saturation flow & Sets the cap for flow ratios $y_a$ and $Y$ \\
 \hline
 \end{tabular}
 \end{table}
 
-\section{Deviations and Justifications}
-\label{sec:irc_deviations}
+\section{Documented Deviations}
 
-\subsection{Simplified PCU Values}
-
-While IRC:106-1990 Table 1 provides composition-dependent PCU factors, this project uses simplified average values for operational convenience in the automated YOLO-based system:
 \begin{itemize}
-    \item Bus: 3.0 (instead of range 2.2-3.7)
-    \item Truck: 3.0 (instead of range 2.2-3.7)
+    \item \textbf{Simplified PCU values:} Buses and trucks both set to 3.0 PCU to keep the YOLO\,$\rightarrow$\,PCU pipeline deterministic when composition percentages fluctuate rapidly.
+    \item \textbf{Cycle range:} Lower bound held at 60 s (common in Indian deployments) although IRC cites 120 s as the comfortable upper limit.
+    \item \textbf{ML enhancements:} Contextual features (hour, weather, events) extend the deterministic IRC guidance; they augment rather than replace Webster’s baseline.
 \end{itemize}
 
-\textbf{Justification:} Real-time composition percentage is difficult to determine during live video processing. The adopted values represent practical middle-ground estimates suitable for Mangalore's mixed traffic.
-
-\subsection{Minimum Cycle Length}
-
-IRC SP:41 recommends 120 seconds as maximum acceptable cycle length. This project uses:
-\begin{itemize}
-    \item Minimum: 60 seconds
-    \item Maximum: 120 seconds
-\end{itemize}
-
-\textbf{Justification:} For low-volume intersections (like Jyoti Circle with moderate PCU values), 60-second cycles are operationally efficient and widely practiced in Indian cities, reducing unnecessary wait times when demand is low.
-
-\subsection{ML Model Enhancements}
-
-The ML models incorporate contextual features (hour, weather, events, weekend) beyond IRC's deterministic formulas.
-
-\textbf{Justification:} IRC standards provide baseline calculation methods. ML models enhance these by learning patterns from real-world variations, representing the next evolution in adaptive signal control while maintaining IRC compliance in base calculations.
+Every figure, equation, and assumption outside these bullet points was excluded from the project, so they are no longer included in this chapter.
 
 \newpage
-

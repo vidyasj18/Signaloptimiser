@@ -14,6 +14,7 @@ from typing import Optional, Tuple, Dict
 import io
 import sumo_simulation
 import webster
+import final
 
 
 def make_json_serializable(obj):
@@ -961,6 +962,7 @@ def main():
                 "pcu_totals": None,
                 "plan": None,
                 "sumo": None,
+                "comparison": None,
             }
         adaptive_state = st.session_state.adaptive_state
 
@@ -1201,8 +1203,8 @@ def main():
                         if pcu_rows:
                             st.dataframe(pd.DataFrame(pcu_rows), width='stretch', hide_index=True)
             
-            # Webster Plan Section
-            if adaptive_state.get("plan"):
+            # Webster Plan Section (only show if no comparison exists)
+            if adaptive_state.get("plan") and not adaptive_state.get("comparison"):
                 st.markdown("### 🕒 Webster Signal Plan")
                 plan = adaptive_state["plan"]
                 
@@ -1232,12 +1234,12 @@ def main():
                 # Phase diagram
                 try:
                     phase_fig = webster.create_phase_diagram(plan)
-                    st.plotly_chart(phase_fig, width='stretch')
+                    st.plotly_chart(phase_fig, width='stretch', key="webster_only_phase_diagram")
                 except Exception as exc:
                     st.warning(f"Could not render phase diagram: {exc}")
             
-            # SUMO Results Section
-            if adaptive_state.get("sumo") and adaptive_state["sumo"].get("metrics"):
+            # SUMO Results Section (only show if no comparison exists)
+            if adaptive_state.get("sumo") and adaptive_state["sumo"].get("metrics") and not adaptive_state.get("comparison"):
                 st.markdown("### 🚦 SUMO Simulation Results")
                 metrics = adaptive_state["sumo"]["metrics"]
                 
@@ -1294,6 +1296,365 @@ def main():
                         files = sumo_results.get("files", {})
                         for file_type, file_path in files.items():
                             st.text(f"{file_type}: {file_path}")
+        
+        # ML vs Webster Comparison Section
+        st.markdown("---")
+        st.markdown("## 🔄 ML vs Webster Comparison")
+        st.markdown("Compare ML-based and Webster-based signal plans with SUMO simulation metrics.")
+        
+        if adaptive_state.get("pcu_totals"):
+            pcu_totals = adaptive_state["pcu_totals"]
+            # Convert NB/SB/EB/WB to N/S/E/W format
+            pcu_dict = {}
+            for appr_name, pcu_val in pcu_totals.items():
+                appr_code = {"NB": "N", "SB": "S", "EB": "E", "WB": "W"}.get(appr_name, appr_name[0])
+                pcu_dict[appr_code] = float(pcu_val)
+            
+            if st.button("🚀 Run ML vs Webster Comparison", type="primary", key="btn_run_comparison"):
+                comparison_state = {}
+                
+                # Step 1: Generate ML Plan
+                with st.spinner("Generating ML-based signal plan..."):
+                    try:
+                        # Load or train ML models with metrics calculation
+                        cycle_model, green_model, cycle_features, green_features, ml_metrics = final.train_models_from_csv(calculate_metrics=True)
+                        
+                        # Save metrics and generate visualizations
+                        if ml_metrics:
+                            metrics_file = final.save_model_metrics(ml_metrics, 'outputs')
+                            comparison_state["ml_model_metrics"] = ml_metrics
+                            
+                            # Generate visualizations (load training data)
+                            try:
+                                csv_path = 'outputs/synthetic_training_data.csv'
+                                if os.path.exists(csv_path):
+                                    df = pd.read_csv(csv_path)
+                                    viz_files = final.generate_model_visualizations(
+                                        ml_metrics, 
+                                        (cycle_model, green_model, cycle_features, green_features),
+                                        df,
+                                        'report/images/ml_model_performance'
+                                    )
+                                    comparison_state["ml_visualizations"] = viz_files
+                            except Exception as viz_error:
+                                st.warning(f"Could not generate visualizations: {viz_error}")
+                        
+                        ml_plan_path = 'outputs/ml_signal_plan.json'
+                        ml_plan = final.predict_ml_signal_plan(
+                            pcu_dict, cycle_model, green_model, cycle_features, green_features, ml_plan_path
+                        )
+                        comparison_state["ml_plan"] = ml_plan
+                        st.success("✅ ML plan generated")
+                    except Exception as e:
+                        st.error(f"Error generating ML plan: {e}")
+                        st.stop()
+                
+                # Step 2: Generate Webster Plan
+                with st.spinner("Generating Webster-based signal plan..."):
+                    try:
+                        webster_plan = webster.compute_webster_plan(pcu_override=pcu_totals)
+                        comparison_state["webster_plan"] = webster_plan
+                        st.success("✅ Webster plan generated")
+                    except Exception as e:
+                        st.error(f"Error generating Webster plan: {e}")
+                        st.stop()
+                
+                # Step 3: Run SUMO for ML Plan
+                with st.spinner("Running SUMO simulation for ML plan..."):
+                    try:
+                        # Create intersection data for SUMO
+                        intersection_data = {}
+                        for appr_name, pcu_val in pcu_totals.items():
+                            if pcu_val > 0:
+                                intersection_data[appr_name] = {'total_pcu': float(pcu_val)}
+                        
+                        # Detect present approaches
+                        present_approaches = set()
+                        for appr_id, data in ml_plan.get('approaches', {}).items():
+                            if data.get('green', 0) > 0:
+                                present_approaches.add(appr_id)
+                        if not present_approaches:
+                            present_approaches = set(pcu_totals.keys())
+                        
+                        # Create temporary SUMO files for ML
+                        temp_dir = 'outputs/comparison_temp'
+                        os.makedirs(temp_dir, exist_ok=True)
+                        ml_net_file = os.path.join(temp_dir, 'ml_network.net.xml')
+                        ml_add_file = os.path.join(temp_dir, 'ml_traffic_lights.add.xml')
+                        ml_route_file = os.path.join(temp_dir, 'ml_routes.rou.xml')
+                        ml_config_file = os.path.join(temp_dir, 'ml_config.sumocfg')
+                        ml_tripinfo_file = os.path.join(temp_dir, 'tripinfo_ML.xml')
+                        
+                        sumo_simulation.create_sumo_network([ml_plan], ml_net_file)
+                        sumo_simulation.create_traffic_lights(ml_plan, ml_add_file, 'ML', ml_net_file)
+                        sumo_simulation.create_routes(
+                            intersection_data, present_approaches, ml_route_file,
+                            sumo_simulation.SIMULATION_TIME, None, ml_net_file
+                        )
+                        sumo_simulation.create_sumo_config(ml_net_file, ml_route_file, ml_add_file, ml_config_file, 'ML')
+                        
+                        # Run SUMO
+                        ml_metrics = None
+                        if sumo_simulation.SUMO_AVAILABLE:
+                            success = sumo_simulation.run_sumo_simulation(ml_config_file, 'ML', use_gui=False)
+                            if success:
+                                # SUMO creates tripinfo in the config file directory
+                                config_dir = os.path.dirname(os.path.abspath(ml_config_file))
+                                tripinfo_actual = os.path.join(config_dir, 'tripinfo_ML.xml')
+                                if os.path.exists(tripinfo_actual):
+                                    ml_metrics = sumo_simulation.extract_sumo_metrics(tripinfo_actual)
+                                elif os.path.exists(ml_tripinfo_file):
+                                    ml_metrics = sumo_simulation.extract_sumo_metrics(ml_tripinfo_file)
+                        comparison_state["ml_metrics"] = ml_metrics
+                        if ml_metrics:
+                            st.success("✅ ML SUMO simulation complete")
+                        else:
+                            st.warning("⚠️ ML SUMO simulation completed but no metrics extracted")
+                    except Exception as e:
+                        st.error(f"Error running ML SUMO: {e}")
+                        comparison_state["ml_metrics"] = None
+                
+                # Step 4: Run SUMO for Webster Plan
+                with st.spinner("Running SUMO simulation for Webster plan..."):
+                    try:
+                        # Create temporary SUMO files for Webster
+                        webster_net_file = os.path.join(temp_dir, 'webster_network.net.xml')
+                        webster_add_file = os.path.join(temp_dir, 'webster_traffic_lights.add.xml')
+                        webster_route_file = os.path.join(temp_dir, 'webster_routes.rou.xml')
+                        webster_config_file = os.path.join(temp_dir, 'webster_config.sumocfg')
+                        webster_tripinfo_file = os.path.join(temp_dir, 'tripinfo_Webster.xml')
+                        
+                        sumo_simulation.create_sumo_network([webster_plan], webster_net_file)
+                        sumo_simulation.create_traffic_lights(webster_plan, webster_add_file, 'Webster', webster_net_file)
+                        sumo_simulation.create_routes(
+                            intersection_data, present_approaches, webster_route_file,
+                            sumo_simulation.SIMULATION_TIME, None, webster_net_file
+                        )
+                        sumo_simulation.create_sumo_config(webster_net_file, webster_route_file, webster_add_file, webster_config_file, 'Webster')
+                        
+                        # Run SUMO
+                        webster_metrics = None
+                        if sumo_simulation.SUMO_AVAILABLE:
+                            success = sumo_simulation.run_sumo_simulation(webster_config_file, 'Webster', use_gui=False)
+                            if success:
+                                # SUMO creates tripinfo in the config file directory
+                                config_dir = os.path.dirname(os.path.abspath(webster_config_file))
+                                tripinfo_actual = os.path.join(config_dir, 'tripinfo_Webster.xml')
+                                if os.path.exists(tripinfo_actual):
+                                    webster_metrics = sumo_simulation.extract_sumo_metrics(tripinfo_actual)
+                                elif os.path.exists(webster_tripinfo_file):
+                                    webster_metrics = sumo_simulation.extract_sumo_metrics(webster_tripinfo_file)
+                        comparison_state["webster_metrics"] = webster_metrics
+                        if webster_metrics:
+                            st.success("✅ Webster SUMO simulation complete")
+                        else:
+                            st.warning("⚠️ Webster SUMO simulation completed but no metrics extracted")
+                    except Exception as e:
+                        st.error(f"Error running Webster SUMO: {e}")
+                        comparison_state["webster_metrics"] = None
+                
+                # Store comparison state
+                adaptive_state["comparison"] = comparison_state
+                st.session_state.adaptive_state = adaptive_state
+                st.success("🎉 Comparison complete! Scroll down to see results.")
+        
+        # Display Comparison Results
+        if adaptive_state.get("comparison"):
+            comparison = adaptive_state["comparison"]
+            ml_plan = comparison.get("ml_plan")
+            webster_plan = comparison.get("webster_plan")
+            ml_metrics = comparison.get("ml_metrics")
+            webster_metrics = comparison.get("webster_metrics")
+            
+            st.markdown("### 📊 Comparison Results")
+            
+            # Side-by-side Phase Diagrams
+            if ml_plan and webster_plan:
+                st.markdown("#### Phase Diagrams")
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.markdown("**ML-based Plan**")
+                    try:
+                        ml_phase_fig = webster.create_phase_diagram(ml_plan)
+                        st.plotly_chart(ml_phase_fig, use_container_width=True, key="comparison_ml_phase_diagram")
+                    except Exception as e:
+                        st.error(f"Could not render ML phase diagram: {e}")
+                
+                with col2:
+                    st.markdown("**Webster-based Plan**")
+                    try:
+                        webster_phase_fig = webster.create_phase_diagram(webster_plan)
+                        st.plotly_chart(webster_phase_fig, use_container_width=True, key="comparison_webster_phase_diagram")
+                    except Exception as e:
+                        st.error(f"Could not render Webster phase diagram: {e}")
+            
+            # Signal Plan Comparison Table
+            if ml_plan and webster_plan:
+                st.markdown("#### Signal Plan Timings")
+                comparison_rows = []
+                all_approaches = set()
+                if ml_plan.get("approaches"):
+                    all_approaches.update(ml_plan["approaches"].keys())
+                if webster_plan.get("approaches"):
+                    all_approaches.update(webster_plan["approaches"].keys())
+                
+                for appr in sorted(all_approaches):
+                    ml_data = ml_plan.get("approaches", {}).get(appr, {})
+                    webster_data = webster_plan.get("approaches", {}).get(appr, {})
+                    comparison_rows.append({
+                        "Approach": appr,
+                        "ML Green (s)": f"{ml_data.get('green', 0.0):.2f}",
+                        "ML Amber (s)": f"{ml_data.get('amber', 0.0):.2f}",
+                        "ML Red (s)": f"{ml_data.get('red', 0.0):.2f}",
+                        "Webster Green (s)": f"{webster_data.get('green', 0.0):.2f}",
+                        "Webster Amber (s)": f"{webster_data.get('amber', 0.0):.2f}",
+                        "Webster Red (s)": f"{webster_data.get('red', 0.0):.2f}",
+                    })
+                
+                if comparison_rows:
+                    st.dataframe(pd.DataFrame(comparison_rows), width='stretch', hide_index=True)
+                
+                # Cycle length comparison
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.metric("ML Cycle Length", f"{ml_plan.get('cycle_length', 0.0):.2f} s")
+                with col2:
+                    st.metric("Webster Cycle Length", f"{webster_plan.get('cycle_length', 0.0):.2f} s")
+            
+            # SUMO Metrics Comparison
+            if ml_metrics and webster_metrics:
+                st.markdown("#### SUMO Simulation Metrics Comparison")
+                
+                # Calculate improvements
+                def calc_improvement(ml_val, webster_val, lower_is_better=True):
+                    if webster_val == 0:
+                        return 0.0, "N/A"
+                    diff = webster_val - ml_val if lower_is_better else ml_val - webster_val
+                    pct = (diff / webster_val) * 100 if webster_val > 0 else 0.0
+                    winner = "ML" if (ml_val < webster_val and lower_is_better) or (ml_val > webster_val and not lower_is_better) else "Webster"
+                    return pct, winner
+                
+                # Key metrics comparison
+                metrics_comparison = []
+                metric_configs = [
+                    ("Average Delay (s/veh)", "avg_delay", True),
+                    ("Average Waiting Time (s/veh)", "avg_waiting_time", True),
+                    ("Average Travel Time (s/veh)", "avg_travel_time", True),
+                    ("Average Time Loss (s/veh)", "avg_time_loss", True),
+                    ("Average Depart Delay (s/veh)", "avg_depart_delay", True),
+                    ("Total Delay (s)", "total_delay", True),
+                    ("Total Waiting Time (s)", "total_waiting_time", True),
+                    ("Vehicle Throughput", "vehicle_count", False),
+                ]
+                
+                for metric_name, metric_key, lower_is_better in metric_configs:
+                    ml_val = ml_metrics.get(metric_key, 0.0)
+                    webster_val = webster_metrics.get(metric_key, 0.0)
+                    improvement, winner = calc_improvement(ml_val, webster_val, lower_is_better)
+                    
+                    metrics_comparison.append({
+                        "Metric": metric_name,
+                        "ML Value": f"{ml_val:.2f}" if isinstance(ml_val, (int, float)) else str(ml_val),
+                        "Webster Value": f"{webster_val:.2f}" if isinstance(webster_val, (int, float)) else str(webster_val),
+                        "Improvement": f"{improvement:+.2f}%" if improvement != 0 else "Equal",
+                        "Winner": winner
+                    })
+                
+                comparison_df = pd.DataFrame(metrics_comparison)
+                st.dataframe(comparison_df, width='stretch', hide_index=True)
+                
+                # Summary
+                ml_wins = sum(1 for row in metrics_comparison if row["Winner"] == "ML")
+                webster_wins = sum(1 for row in metrics_comparison if row["Winner"] == "Webster")
+                overall_winner = "ML" if ml_wins > webster_wins else "Webster" if webster_wins > ml_wins else "Tie"
+                
+                st.markdown(f"**Overall Winner: {overall_winner}** (ML wins: {ml_wins}, Webster wins: {webster_wins})")
+                
+                # Visual comparison charts - Combined view
+                st.markdown("#### Visual Metrics Comparison")
+                
+                # 1. Time-based metrics comparison
+                time_metrics = {
+                    "Average Delay": ("avg_delay", True),
+                    "Average Waiting Time": ("avg_waiting_time", True),
+                    "Average Travel Time": ("avg_travel_time", True),
+                    "Average Time Loss": ("avg_time_loss", True),
+                }
+                
+                fig_time = go.Figure()
+                x_time = list(time_metrics.keys())
+                ml_time_values = [ml_metrics.get(key, 0) for _, (key, _) in time_metrics.items()]
+                webster_time_values = [webster_metrics.get(key, 0) for _, (key, _) in time_metrics.items()]
+                
+                fig_time.add_trace(go.Bar(
+                    name='ML-based',
+                    x=x_time,
+                    y=ml_time_values,
+                    marker_color='#3498db',
+                    text=[f"{v:.2f}" for v in ml_time_values],
+                    textposition='outside'
+                ))
+                fig_time.add_trace(go.Bar(
+                    name='Webster-based',
+                    x=x_time,
+                    y=webster_time_values,
+                    marker_color='#e74c3c',
+                    text=[f"{v:.2f}" for v in webster_time_values],
+                    textposition='outside'
+                ))
+                
+                fig_time.update_layout(
+                    title='Time-based Performance Comparison: ML vs Webster',
+                    xaxis_title='Metrics',
+                    yaxis_title='Time (seconds)',
+                    barmode='group',
+                    height=400,
+                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                )
+                st.plotly_chart(fig_time, use_container_width=True, key="comparison_time_metrics")
+                
+                # 2. PCU/Throughput-based metrics comparison
+                throughput_metrics = {
+                    "Vehicle Throughput": ("vehicle_count", False),
+                }
+                
+                fig_throughput = go.Figure()
+                x_throughput = list(throughput_metrics.keys())
+                ml_throughput_values = [ml_metrics.get(key, 0) for _, (key, _) in throughput_metrics.items()]
+                webster_throughput_values = [webster_metrics.get(key, 0) for _, (key, _) in throughput_metrics.items()]
+                
+                fig_throughput.add_trace(go.Bar(
+                    name='ML-based',
+                    x=x_throughput,
+                    y=ml_throughput_values,
+                    marker_color='#3498db',
+                    text=[f"{int(v)}" for v in ml_throughput_values],
+                    textposition='outside'
+                ))
+                fig_throughput.add_trace(go.Bar(
+                    name='Webster-based',
+                    x=x_throughput,
+                    y=webster_throughput_values,
+                    marker_color='#e74c3c',
+                    text=[f"{int(v)}" for v in webster_throughput_values],
+                    textposition='outside'
+                ))
+                
+                fig_throughput.update_layout(
+                    title='Traffic Throughput Comparison: ML vs Webster',
+                    xaxis_title='Metrics',
+                    yaxis_title='Number of Vehicles',
+                    barmode='group',
+                    height=400,
+                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                )
+                st.plotly_chart(fig_throughput, use_container_width=True, key="comparison_throughput_metrics")
+            elif ml_metrics or webster_metrics:
+                st.warning("⚠️ Only partial SUMO results available. Both simulations need to complete for comparison.")
+            else:
+                st.info("💡 Click 'Run ML vs Webster Comparison' to generate comparison results.")
+        else:
+            st.info("💡 Generate PCU data first, then click 'Run ML vs Webster Comparison' to see side-by-side comparison.")
     
     # Batch processing for four approaches (simplified)
     with st.expander("📦 Batch: Process four approach videos (NB/SB/EB/WB)"):

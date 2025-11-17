@@ -1,104 +1,95 @@
 \contentsline {chapter}{DECLARATION}{1}{chapter*.1}%
 \contentsline {chapter}{CERTIFICATE}{2}{chapter*.2}%
 \contentsline {chapter}{ACKNOWLEDGEMENT}{3}{chapter*.3}%
-\contentsline {chapter}{\numberline {1}Abstract}{9}{chapter.1}%
-\contentsline {section}{\numberline {1.1}Summary of Objectives}{9}{section.1.1}%
+\contentsline {chapter}{\numberline {1}Abstract}{10}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Summary of Objectives}{10}{section.1.1}%
 \contentsline {section}{\numberline {1.2}Key Design Features}{10}{section.1.2}%
-\contentsline {section}{\numberline {1.3}Overview}{11}{section.1.3}%
+\contentsline {section}{\numberline {1.3}Overview}{10}{section.1.3}%
 \contentsline {section}{\numberline {1.4}Findings}{11}{section.1.4}%
-\contentsline {chapter}{\numberline {2}Introduction}{13}{chapter.2}%
-\contentsline {section}{\numberline {2.1}Background and Significance}{13}{section.2.1}%
-\contentsline {section}{\numberline {2.2}Problem Statement}{13}{section.2.2}%
-\contentsline {section}{\numberline {2.3}Main Objectives of the Project}{14}{section.2.3}%
-\contentsline {section}{\numberline {2.4}Scope and Limitations of the Project}{15}{section.2.4}%
-\contentsline {subsection}{\numberline {2.4.1}Scope of the Project}{15}{subsection.2.4.1}%
-\contentsline {subsection}{\numberline {2.4.2}Limitations of the Project}{15}{subsection.2.4.2}%
-\contentsline {section}{\numberline {2.5}Research Methodology and Approach}{15}{section.2.5}%
-\contentsline {chapter}{\numberline {3}Methodology}{17}{chapter.3}%
-\contentsline {section}{\numberline {3.1}Objective Definition}{17}{section.3.1}%
-\contentsline {section}{\numberline {3.2}Selection of Study Intersections}{17}{section.3.2}%
-\contentsline {section}{\numberline {3.3}Field Data Collection}{18}{section.3.3}%
-\contentsline {subsection}{\numberline {3.3.1}Initial Plan}{18}{subsection.3.3.1}%
-\contentsline {subsection}{\numberline {3.3.2}Challenges Faced}{18}{subsection.3.3.2}%
-\contentsline {subsection}{\numberline {3.3.3}Revised Data Collection Setup}{18}{subsection.3.3.3}%
-\contentsline {section}{\numberline {3.4}Development of Analytical Framework in Python}{18}{section.3.4}%
-\contentsline {subsection}{\numberline {3.4.1}Streamlit Web Application Development}{18}{subsection.3.4.1}%
-\contentsline {section}{\numberline {3.5}YOLO-Based Vehicle Detection and PCU Estimation}{19}{section.3.5}%
-\contentsline {subsection}{\numberline {3.5.1}Stage 1: Streamlit-YOLO Application}{19}{subsection.3.5.1}%
-\contentsline {subsection}{\numberline {3.5.2}Stage 2: Signal Timing and Phase Diagram Generator}{19}{subsection.3.5.2}%
-\contentsline {section}{\numberline {3.6}Case Study Analysis for Selected Intersections}{20}{section.3.6}%
-\contentsline {subsection}{\numberline {3.6.1}Jyoti Circle (3-Arm T-Junction)}{20}{subsection.3.6.1}%
-\contentsline {subsection}{\numberline {3.6.2}Hampankatta Circle (4-Arm Intersection)}{20}{subsection.3.6.2}%
-\contentsline {section}{\numberline {3.7}Validation and Interpretation}{21}{section.3.7}%
-\contentsline {chapter}{\numberline {4}IRC Standards and Assumptions}{22}{chapter.4}%
-\contentsline {section}{\numberline {4.1}IRC:106-1990 - Guidelines for Capacity of Urban Roads in Plain Areas}{22}{section.4.1}%
-\contentsline {subsection}{\numberline {4.1.1}Document Overview}{22}{subsection.4.1.1}%
-\contentsline {subsection}{\numberline {4.1.2}Passenger Car Unit (PCU) Conversion Factors}{22}{subsection.4.1.2}%
-\contentsline {subsubsection}{PCU Conversion Table}{22}{subsection.4.1.2}%
-\contentsline {subsection}{\numberline {4.1.3}Application in This Project}{23}{subsection.4.1.3}%
-\contentsline {subsection}{\numberline {4.1.4}Design Service Volumes and Level of Service}{23}{subsection.4.1.4}%
-\contentsline {subsection}{\numberline {4.1.5}Recommended Design Service Volumes}{24}{subsection.4.1.5}%
-\contentsline {subsection}{\numberline {4.1.6}Peak Hour Factor}{24}{subsection.4.1.6}%
-\contentsline {section}{\numberline {4.2}IRC SP:41 - Guidelines for the Design of At-Grade Intersections in Rural and Urban Areas}{25}{section.4.2}%
-\contentsline {subsection}{\numberline {4.2.1}Document Overview}{25}{subsection.4.2.1}%
-\contentsline {subsection}{\numberline {4.2.2}Signal Timing Formulas}{25}{subsection.4.2.2}%
-\contentsline {subsubsection}{Webster's Optimum Cycle Time Formula}{25}{subsection.4.2.2}%
-\contentsline {subsubsection}{Effective Green Time Calculation}{25}{equation.4.2.1}%
-\contentsline {subsubsection}{Green Time Allocation}{25}{equation.4.2.2}%
-\contentsline {subsection}{\numberline {4.2.3}Saturation Flow Rate}{26}{subsection.4.2.3}%
-\contentsline {subsection}{\numberline {4.2.4}Lost Time Assumptions}{26}{subsection.4.2.4}%
-\contentsline {subsection}{\numberline {4.2.5}Project-Specific Assumptions}{27}{subsection.4.2.5}%
-\contentsline {subsection}{\numberline {4.2.6}Minimum Cycle Length Recommendation}{27}{subsection.4.2.6}%
-\contentsline {subsection}{\numberline {4.2.7}Webster's Average Delay Formula}{27}{subsection.4.2.7}%
-\contentsline {subsection}{\numberline {4.2.8}Intersection Capacity}{28}{subsection.4.2.8}%
-\contentsline {subsection}{\numberline {4.2.9}Signal Phase Design}{28}{subsection.4.2.9}%
-\contentsline {section}{\numberline {4.3}Integration with Machine Learning Models}{29}{section.4.3}%
-\contentsline {subsection}{\numberline {4.3.1}Synthetic Dataset Generation}{29}{subsection.4.3.1}%
-\contentsline {subsection}{\numberline {4.3.2}Real-World Adjustments}{29}{subsection.4.3.2}%
-\contentsline {section}{\numberline {4.4}SUMO Simulation Parameters}{30}{section.4.4}%
-\contentsline {section}{\numberline {4.5}Compliance Summary}{30}{section.4.5}%
-\contentsline {section}{\numberline {4.6}Deviations and Justifications}{30}{section.4.6}%
-\contentsline {subsection}{\numberline {4.6.1}Simplified PCU Values}{30}{subsection.4.6.1}%
-\contentsline {subsection}{\numberline {4.6.2}Minimum Cycle Length}{31}{subsection.4.6.2}%
-\contentsline {subsection}{\numberline {4.6.3}ML Model Enhancements}{31}{subsection.4.6.3}%
-\contentsline {chapter}{\numberline {5}Traffic Signal Optimization with YOLO Detection}{32}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Objectives}{32}{section.5.1}%
-\contentsline {section}{\numberline {5.2}YOLO (You Only Look Once)}{32}{section.5.2}%
-\contentsline {section}{\numberline {5.3}Workflow}{32}{section.5.3}%
-\contentsline {subsection}{\numberline {5.3.1}Stage 1: Detection \& PCU Calculation (Streamlit App)}{33}{subsection.5.3.1}%
-\contentsline {subsection}{\numberline {5.3.2}Stage 2: Signal Timing \& Visualization (Integrated in Streamlit)}{33}{subsection.5.3.2}%
-\contentsline {subsection}{\numberline {5.3.3}Stage 3: SUMO Simulation \& Validation (Integrated in Streamlit)}{33}{subsection.5.3.3}%
-\contentsline {section}{\numberline {5.4}Results and Analysis}{34}{section.5.4}%
-\contentsline {subsection}{\numberline {5.4.1}Intersection 1: Jyoti Circle (3-Approach Y-Junction)}{34}{subsection.5.4.1}%
-\contentsline {subsection}{\numberline {5.4.2}Intersection 2: Hampankatta Circle (4-Approach)}{34}{subsection.5.4.2}%
-\contentsline {section}{\numberline {5.5}Comparative Analysis}{35}{section.5.5}%
-\contentsline {subsection}{\numberline {5.5.1}SUMO Simulation Validation Results}{35}{subsection.5.5.1}%
-\contentsline {chapter}{\numberline {6}SUMO Simulation Validation and Comparison}{37}{chapter.6}%
-\contentsline {section}{\numberline {6.1}Introduction to SUMO}{37}{section.6.1}%
-\contentsline {subsection}{\numberline {6.1.1}Why SUMO Validation}{37}{subsection.6.1.1}%
-\contentsline {section}{\numberline {6.2}SUMO Network Generation}{37}{section.6.2}%
-\contentsline {subsection}{\numberline {6.2.1}Dynamic Intersection Detection}{38}{subsection.6.2.1}%
-\contentsline {subsection}{\numberline {6.2.2}Network File Creation}{38}{subsection.6.2.2}%
-\contentsline {subsubsection}{Node Definitions (.nod.xml)}{38}{subsection.6.2.2}%
-\contentsline {subsubsection}{Edge Definitions (.edg.xml)}{38}{subsection.6.2.2}%
-\contentsline {subsubsection}{Network Compilation}{38}{subsection.6.2.2}%
-\contentsline {section}{\numberline {6.3}Traffic Light Program Generation}{39}{section.6.3}%
-\contentsline {subsection}{\numberline {6.3.1}Phase State String Construction}{39}{subsection.6.3.1}%
-\contentsline {subsection}{\numberline {6.3.2}Phase Sequence}{39}{subsection.6.3.2}%
-\contentsline {subsection}{\numberline {6.3.3}Timing Conversion}{39}{subsection.6.3.3}%
-\contentsline {section}{\numberline {6.4}Route Generation}{40}{section.6.4}%
-\contentsline {subsection}{\numberline {6.4.1}PCU to Vehicle Flow Conversion}{40}{subsection.6.4.1}%
-\contentsline {subsection}{\numberline {6.4.2}T-Junction Routing Logic}{40}{subsection.6.4.2}%
-\contentsline {section}{\numberline {6.5}Simulation Execution}{40}{section.6.5}%
-\contentsline {subsection}{\numberline {6.5.1}Simulation Configuration}{40}{subsection.6.5.1}%
-\contentsline {section}{\numberline {6.6}Results and Comparison}{41}{section.6.6}%
-\contentsline {subsection}{\numberline {6.6.1}Performance Metrics Extracted}{41}{subsection.6.6.1}%
-\contentsline {subsection}{\numberline {6.6.2}Statistical Analysis}{41}{subsection.6.6.2}%
-\contentsline {subsection}{\numberline {6.6.3}Key Performance Metrics}{41}{subsection.6.6.3}%
-\contentsline {section}{\numberline {6.7}Significance of Results}{42}{section.6.7}%
-\contentsline {section}{\numberline {6.8}Validation of Real-World Applicability}{42}{section.6.8}%
-\contentsline {chapter}{\numberline {7}Conclusion}{43}{chapter.7}%
-\contentsline {section}{\numberline {7.1}Key Achievements}{44}{section.7.1}%
-\contentsline {section}{\numberline {7.2}Future Work}{44}{section.7.2}%
-\contentsline {section}{\numberline {7.3}Practical Implementation Recommendations}{44}{section.7.3}%
-\contentsline {chapter}{\numberline {8}References}{46}{chapter.8}%
+\contentsline {chapter}{\numberline {2}Introduction}{12}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Background and Significance}{12}{section.2.1}%
+\contentsline {section}{\numberline {2.2}Problem Statement}{12}{section.2.2}%
+\contentsline {section}{\numberline {2.3}Main Objectives of the Project}{13}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Scope and Limitations of the Project}{13}{section.2.4}%
+\contentsline {subsection}{\numberline {2.4.1}Scope of the Project}{13}{subsection.2.4.1}%
+\contentsline {subsection}{\numberline {2.4.2}Limitations of the Project}{14}{subsection.2.4.2}%
+\contentsline {section}{\numberline {2.5}Research Methodology and Approach}{14}{section.2.5}%
+\contentsline {chapter}{\numberline {3}Methodology}{15}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Objective Definition}{15}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Selection of Study Intersections}{15}{section.3.2}%
+\contentsline {section}{\numberline {3.3}Field Data Collection}{16}{section.3.3}%
+\contentsline {subsection}{\numberline {3.3.1}Initial Plan}{16}{subsection.3.3.1}%
+\contentsline {subsection}{\numberline {3.3.2}Challenges Faced}{16}{subsection.3.3.2}%
+\contentsline {subsection}{\numberline {3.3.3}Revised Data Collection Setup}{16}{subsection.3.3.3}%
+\contentsline {section}{\numberline {3.4}Signal Control Assumptions}{17}{section.3.4}%
+\contentsline {subsection}{\numberline {3.4.1}Saturation Flow Baseline}{17}{subsection.3.4.1}%
+\contentsline {subsection}{\numberline {3.4.2}Phase Design Logic}{17}{subsection.3.4.2}%
+\contentsline {subsection}{\numberline {3.4.3}Timing Constants}{17}{subsection.3.4.3}%
+\contentsline {section}{\numberline {3.5}Analysis of both intersections}{18}{section.3.5}%
+\contentsline {subsection}{\numberline {3.5.1}Jyoti Circle (3-Arm T-Junction)}{18}{subsection.3.5.1}%
+\contentsline {subsection}{\numberline {3.5.2}Hampankatta Circle (4-Arm Intersection)}{18}{subsection.3.5.2}%
+\contentsline {section}{\numberline {3.6}Validation and Interpretation}{18}{section.3.6}%
+\contentsline {chapter}{\numberline {4}IRC Standards and Assumptions}{20}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Core References}{20}{section.4.1}%
+\contentsline {section}{\numberline {4.2}PCU Conversion Factors}{20}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Signal Timing Formulas Used}{21}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Adopted Timing Assumptions}{21}{section.4.4}%
+\contentsline {section}{\numberline {4.5}Where Each Standard Shows Up}{21}{section.4.5}%
+\contentsline {section}{\numberline {4.6}Documented Deviations}{21}{section.4.6}%
+\contentsline {chapter}{\numberline {5}Traffic Signal Optimization: Complete System Implementation}{23}{chapter.5}%
+\contentsline {section}{\numberline {5.1}System Overview}{23}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Data Capture and Demand Estimation}{23}{section.5.2}%
+\contentsline {subsection}{\numberline {5.2.1}YOLO Detection Results}{25}{subsection.5.2.1}%
+\contentsline {subsubsection}{Intersection 1: Jyoti Circle (3-Approach T-Junction)}{25}{subsection.5.2.1}%
+\contentsline {subsubsection}{Intersection 2: Hampankatta Circle (4-Approach)}{26}{figure.caption.10}%
+\contentsline {section}{\numberline {5.3}Calculation(Brain of the system)}{28}{section.5.3}%
+\contentsline {subsection}{\numberline {5.3.1}Webster's Method (Primary Path)}{28}{subsection.5.3.1}%
+\contentsline {subsection}{\numberline {5.3.2}Machine Learning Surrogate (Comparative Path)}{28}{subsection.5.3.2}%
+\contentsline {section}{\numberline {5.4}Webster's Method Optimization}{28}{section.5.4}%
+\contentsline {section}{\numberline {5.5}Assumptions and Design Rules}{28}{section.5.5}%
+\contentsline {subsection}{\numberline {5.5.1}Webster's Method Implementation}{28}{subsection.5.5.1}%
+\contentsline {section}{\numberline {5.6}Machine Learning Approach}{29}{section.5.6}%
+\contentsline {section}{\numberline {5.7}Simulation-Backed Evaluation}{30}{section.5.7}%
+\contentsline {section}{\numberline {5.8}SUMO Microsimulation Validation}{30}{section.5.8}%
+\contentsline {subsection}{\numberline {5.8.1}SUMO Simulation Process}{30}{subsection.5.8.1}%
+\contentsline {subsection}{\numberline {5.8.2}SUMO Simulation Metrics}{32}{subsection.5.8.2}%
+\contentsline {subsection}{\numberline {5.8.3}SUMO GUI Simulation Visualizations}{32}{subsection.5.8.3}%
+\contentsline {section}{\numberline {5.9}Method Selection and Final Workflow}{33}{section.5.9}%
+\contentsline {subsection}{\numberline {5.9.1}Final Integrated Workflow}{34}{subsection.5.9.1}%
+\contentsline {chapter}{\numberline {6}Machine Learning Approach: Comparative Analysis with Webster's Method}{35}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Original Project Plan}{35}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Machine Learning Implementation}{35}{section.6.2}%
+\contentsline {subsection}{\numberline {6.2.1}Model Architecture}{35}{subsection.6.2.1}%
+\contentsline {subsubsection}{Cycle Length Model -- Random Forest Regressor}{36}{subsection.6.2.1}%
+\contentsline {subsubsection}{Green Split Model -- Random Forest Regressor}{36}{subsection.6.2.1}%
+\contentsline {subsection}{\numberline {6.2.2}Training Data Generation}{37}{subsection.6.2.2}%
+\contentsline {subsection}{\numberline {6.2.3}Model Training and Performance Evaluation}{38}{subsection.6.2.3}%
+\contentsline {subsubsection}{Training Methodology}{39}{subsection.6.2.3}%
+\contentsline {subsubsection}{Model Performance Metrics}{39}{subsection.6.2.3}%
+\contentsline {subsubsection}{Feature Importance Analysis}{41}{figure.caption.23}%
+\contentsline {subsection}{\numberline {6.2.4}Inference and Normalization}{43}{subsection.6.2.4}%
+\contentsline {subsection}{\numberline {6.2.5}Signal Plan Visualization: Phase Diagrams}{43}{subsection.6.2.5}%
+\contentsline {subsubsection}{Jyoti Circle Phase Diagrams}{44}{subsection.6.2.5}%
+\contentsline {subsubsection}{Hampankatta Circle Phase Diagrams}{45}{figure.caption.27}%
+\contentsline {section}{\numberline {6.3}SUMO Simulation Validation}{47}{section.6.3}%
+\contentsline {section}{\numberline {6.4}Comparative Results: Intersection-Specific Performance}{47}{section.6.4}%
+\contentsline {subsection}{\numberline {6.4.1}Jyoti Circle: 3-Way T-Junction (Lower Traffic, Asymmetric Flow)}{47}{subsection.6.4.1}%
+\contentsline {subsection}{\numberline {6.4.2}Hampankatta Circle: 4-Way Intersection (Higher Traffic, Balanced Flow)}{48}{subsection.6.4.2}%
+\contentsline {subsection}{\numberline {6.4.3}Analysis of Performance Differences}{49}{subsection.6.4.3}%
+\contentsline {subsection}{\numberline {6.4.4}SUMO Simulation Results and Analysis}{49}{subsection.6.4.4}%
+\contentsline {subsubsection}{Time-Based Performance Metrics}{49}{subsection.6.4.4}%
+\contentsline {subsubsection}{Traffic Throughput Comparison}{51}{figure.caption.31}%
+\contentsline {subsubsection}{Inference from SUMO Results}{52}{figure.caption.31}%
+\contentsline {section}{\numberline {6.5}Method Selection Strategy}{54}{section.6.5}%
+\contentsline {subsection}{\numberline {6.5.1}Consistency and Reliability}{54}{subsection.6.5.1}%
+\contentsline {subsection}{\numberline {6.5.2}Practical Considerations}{54}{subsection.6.5.2}%
+\contentsline {subsection}{\numberline {6.5.3}Revised Final Workflow}{54}{subsection.6.5.3}%
+\contentsline {section}{\numberline {6.6}Inference and Conclusions}{55}{section.6.6}%
+\contentsline {subsection}{\numberline {6.6.1}Key Findings}{55}{subsection.6.6.1}%
+\contentsline {subsection}{\numberline {6.6.2}Methodological Insights}{55}{subsection.6.6.2}%
+\contentsline {subsection}{\numberline {6.6.3}Future Directions}{56}{subsection.6.6.3}%
+\contentsline {chapter}{\numberline {7}Conclusion}{57}{chapter.7}%
+\contentsline {section}{\numberline {7.1}Key Achievements}{57}{section.7.1}%
+\contentsline {section}{\numberline {7.2}Future Work}{58}{section.7.2}%
+\contentsline {section}{\numberline {7.3}Practical Implementation Recommendations}{58}{section.7.3}%
+\contentsline {chapter}{\numberline {8}References}{60}{chapter.8}%

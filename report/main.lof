@@ -1,8 +1,31 @@
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Study locations and setups for Jyoti and Hampankatta intersections overview.}}{16}{figure.caption.4}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
+\contentsline {figure}{\numberline {5.1}{\ignorespaces Insta360 Studio export interface creating directional feeds for YOLO processing.}}{24}{figure.caption.7}%
+\contentsline {figure}{\numberline {5.2}{\ignorespaces YOLO detection example with bounding boxes illustrating real-time classifications capability.}}{25}{figure.caption.8}%
+\contentsline {figure}{\numberline {5.3}{\ignorespaces YOLO detection breakdown for Jyoti Circle covering PCU and vehicle stats.}}{26}{figure.caption.9}%
+\contentsline {figure}{\numberline {5.4}{\ignorespaces Jyoti Circle YOLO data comparison highlighting direction-wise PCU patterns insights.}}{26}{figure.caption.10}%
+\contentsline {figure}{\numberline {5.5}{\ignorespaces Hampankatta Circle PCU summary detailing per-approach traffic volume profiles clearly.}}{27}{figure.caption.11}%
+\contentsline {figure}{\numberline {5.6}{\ignorespaces Hampankatta YOLO data comparison showing direction-wise PCU flow characteristics clearly.}}{27}{figure.caption.12}%
+\contentsline {figure}{\numberline {5.7}{\ignorespaces Streamlit output displaying Webster optimization timings and phase diagram results.}}{29}{figure.caption.13}%
+\contentsline {figure}{\numberline {5.8}{\ignorespaces ML versus Webster timings and SUMO metrics for Jyoti Circle.}}{31}{figure.caption.14}%
+\contentsline {figure}{\numberline {5.9}{\ignorespaces ML versus Webster timings and SUMO metrics for Hampankatta Circle.}}{31}{figure.caption.15}%
+\contentsline {figure}{\numberline {5.10}{\ignorespaces SUMO-GUI view of Jyoti Circle simulation with three-arm operations visualized.}}{33}{figure.caption.18}%
+\contentsline {figure}{\numberline {5.11}{\ignorespaces SUMO-GUI view of Hampankatta simulation showcasing four-arm traffic dynamics clearly.}}{33}{figure.caption.19}%
 \addvspace {10\p@ }
+\contentsline {figure}{\numberline {6.1}{\ignorespaces Synthetic training dataset distribution of PCU, cycles, and green splits.}}{38}{figure.caption.20}%
+\contentsline {figure}{\numberline {6.2}{\ignorespaces Cycle length model predictions closely follow actual timings on tests.}}{40}{figure.caption.22}%
+\contentsline {figure}{\numberline {6.3}{\ignorespaces Green split model accurately predicts per-approach optimal green times consistently.}}{41}{figure.caption.23}%
+\contentsline {figure}{\numberline {6.4}{\ignorespaces Cycle model feature importance highlighting demand and contextual drivers significance.}}{42}{figure.caption.24}%
+\contentsline {figure}{\numberline {6.5}{\ignorespaces Green split feature ranking emphasizes approach volumes and conditions influences.}}{42}{figure.caption.25}%
+\contentsline {figure}{\numberline {6.6}{\ignorespaces ML phase diagram for Jyoti Circle highlighting 60s cycle performance.}}{44}{figure.caption.26}%
+\contentsline {figure}{\numberline {6.7}{\ignorespaces Webster phase diagram for Jyoti Circle using 62s cycle allocation.}}{44}{figure.caption.27}%
+\contentsline {figure}{\numberline {6.8}{\ignorespaces ML phase diagram for Hampankatta Circle with optimized 92s cycle timings.}}{45}{figure.caption.28}%
+\contentsline {figure}{\numberline {6.9}{\ignorespaces Webster phase diagram for Hampankatta Circle using 89s benchmark timings.}}{45}{figure.caption.29}%
+\contentsline {figure}{\numberline {6.10}{\ignorespaces Jyoti visual metrics comparing Webster and ML performance outcomes clearly.}}{50}{figure.caption.30}%
+\contentsline {figure}{\numberline {6.11}{\ignorespaces Hampankatta visual metrics comparing ML and Webster performance outcomes clearly.}}{51}{figure.caption.31}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }

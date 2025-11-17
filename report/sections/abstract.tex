@@ -4,62 +4,34 @@
 \section{Summary of Objectives}
 \label{sec:objectives}
 
-This project set out to make traffic signals in Mangalore work better—plain and simple. We combined trusted traffic engineering (Webster's method) with practical, modern tools like computer vision and microsimulation. Using real video from the field and careful analysis, we aimed to:
-
-\begin{itemize}
-    \item \textbf{Improve traffic flow and reduce congestion:} Cut down delays and smooth out movement at busy junctions with signal plans that actually fit local conditions.
-    
-    \item \textbf{Assess the impact of current and proposed signal timings:} Measure, not guess—compare existing timings with optimized ones to see how much wait times and stops can realistically drop.
-    
-    \item \textbf{Demonstrate the use of innovative methodologies:} Use YOLOv8 for automated counts, Python for analysis, and a Streamlit app to make optimization easy to run—so it’s not a spreadsheet-only exercise.
-    
-    \item \textbf{Provide actionable planning recommendations:} Share clear, usable suggestions for upgrades—grounded in field data, validated calculations, and simulation outputs.
-    
-    \item \textbf{Integrate field observations and standards:} Keep the work aligned with IRC:106-1990 and standard practice, and tie every recommendation back to what we observed on site.
-    
-    \item \textbf{Document challenges and adaptive solutions:} Be honest about what didn’t go perfectly in the field and how we worked around it.
-\end{itemize}
-
-In short, the goal was a practical, data-informed blueprint for better signals in Indian cities—mixing theory, on-ground practice, and technology to deliver measurable improvements.
+This project is about automating stoplight timing at two typical junctions in Mangalore - using a mix of Webster method, ML and SUMO Simulation to compare and analyse with some time based and vehicle based metrics.
 
 \section{Key Design Features}
 \label{sec:design_features}
 
 \begin{itemize}
-    \item \textbf{Intersection Selection and Classification:} We picked two very different intersections in Mangalore—one signalized (Jyoti Circle) and one manually controlled (Hampankatta). That mix lets us tackle a wider set of real-world issues.
-    
-    \item \textbf{Data-Driven Approach:} We relied on site-specific video and checks against manual counts. An Insta360 camera helped us cover the whole junction with minimal manpower—even when the weather and equipment weren’t on our side.
-    
-    \item \textbf{Automated Vehicle Detection using YOLO:} YOLOv8 handled vehicle detection, classification, and counting from the videos. We converted those counts to PCUs using IRC factors, reducing manual effort and error—so it scales to more sites without redoing everything by hand.
-    
-    \item \textbf{Standards-Based Methodology:} Analyses and designs follow standard practice—IRC:106-1990 and Webster’s method—so the work is consistent, traceable, and familiar to practitioners.
-    
-    \item \textbf{Quantitative Signal Optimization:} We used Webster’s formula to set cycle lengths and split greens across phases. That forms the backbone of the signal plans.
-    
-    \item \textbf{Streamlit Web Application:} A simple Streamlit app pulls everything together—YOLO-based counts, Webster calculations, and SUMO simulation—so the full workflow is usable without command-line friction.
-    
-    \item \textbf{User-Friendly Outputs:} We visualized flows, phases, and delays in clear charts and diagrams (via Jupyter). It makes the story easier to follow for both engineers and decision-makers.
-    
-    \item \textbf{Practical Reporting and Documentation:} The workflow—from site selection to recommendations—is documented end-to-end, with a focus on why we made certain calls and how we adapted when things didn’t go as planned.
+    \item \textbf{Diverse sites:} Jyoti Circle (3-arm, signalized) and Hampankatta Circle (4-arm, manually controlled) capture the range of urban geometries and operating styles in Mangalore.
+    \item \textbf{Single-sensor field capture:} A lone Insta360 camera per site provided full-junction coverage, reducing manpower without compromising accuracy even during adverse weather.
+    \item \textbf{Automated demand estimation:} YOLOv8 counts, converted to PCUs via IRC factors, replaced manual tallies and feed directly into optimization workflows.
+    \item \textbf{Dual optimization engines:} Webster's method supplies deterministic baselines, while Random Forest regressors (cycle and green splits) learn context-aware adjustments from synthetic teacher data.
+    \item \textbf{Integrated tooling:} A Streamlit interface orchestrates detection, optimization, and SUMO simulation, enabling side-by-side ML vs Webster plan reviews without scripting overhead.
+    \item \textbf{Traceable outputs:} Phase diagrams, performance tables, and archived SUMO artifacts document every recommendation from raw data through validation.
 \end{itemize}
-
-Altogether, these choices add up to a robust, standards-aligned, and genuinely practical approach to signal optimization.
 
 \section{Overview}
 \label{sec:overview}
 
-Urban intersections are the pressure points of a city’s road network—where everything either works together or doesn’t. In Mangalore, rapid growth and rising vehicle volumes have made signal timing more than a routine task; it’s a pressing challenge. When signals aren’t tuned well, queues build up, delays go up, and frustration follows (especially at peak hours). The flip side is encouraging: well-designed timings can meaningfully cut delays and make movement smoother and safer.
-
-We focused on two key intersections in Mangalore: a signalized one (Jyoti Circle) and one managed manually by traffic police (Hampankatta Circle). Using video-driven, YOLO-based vehicle counts and site-specific PCUs, we applied Webster’s method to design timings and then tested those plans in SUMO to see how they’d perform before recommending changes.
+Urban intersections dictate corridor performance; in Mangalore, swelling volumes have exposed legacy signal plans that no longer reflect measured demand. Our workflow begins with video-driven PCU extraction, then branches into Webster and ML optimizers whose outputs are stress-tested in SUMO under identical conditions. This closed loop translates raw detections into vetted signal plans while highlighting where analytical versus learned strategies excel.
 
 \section{Findings}
 \label{sec:findings}
 
-The results are practical and ready to use. With YOLOv8 counts translated into PCUs at both Jyoti and Hampankatta, Webster’s method produced cycle lengths in the 60–92 second range (depending on demand), along with clear green splits per phase and movement.
-
-SUMO microsimulation backed this up. Across runs, we saw improvements in average delay, waiting time, travel time, and throughput—evidence that the plans hold up under realistic traffic conditions.
-
-Beyond the numbers, we created clear signal phasing diagrams that lay out the sequence and duration of green, amber, and red for each movement—useful references for implementation. The SUMO artifacts (networks, signal programs, and performance metrics) provide a complete trail from data to decision. Taken together, the approach and outputs show a reliable, data-driven path to better signal control, validated in simulation before changes hit the street.
+\begin{itemize}
+    \item \textbf{Context drives performance:} At Jyoti Circle (3-way, 6,802~PCU/hr, 3.5:1 NS:W), Webster cut average delay by 2.9\%, travel time by 2.4\%, and depart delay by 21.1\% versus ML. At Hampankatta Circle (4-way, 10,680~PCU/hr, near-balanced), ML lowered delay by 6.4\%, travel time by 5.7\%, and time loss by 7.1\% versus Webster.
+    \item \textbf{Validation matters:} SUMO simulations with identical demand confirmed both signal plans are feasible and quantified tradeoffs in throughput, waiting time, and travel time.
+    \item \textbf{Method guidance:} Webster's analytical proportional splits suit lower-volume, asymmetric layouts; ML's learned splits excel in high-volume, four-arm intersections where multi-approach interactions dominate.
+    \item \textbf{Implementation-ready assets:} Phase diagrams, timing tables, and archived SUMO networks/signal programs provide a full trace from detection to deployment for either method.
+\end{itemize}
 
 \newpage
 

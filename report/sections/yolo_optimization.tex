@@ -8,7 +8,7 @@ The primary objective of the YOLO detection component is to capture and process 
 \begin{itemize}
     \item \textbf{Vehicle Detection \& Classification:} Use YOLOv8 to detect and classify vehicles (cars, buses, motorcycles, trucks) in uploaded traffic videos for each intersection approach.
     \item \textbf{Vehicle Counting:} Count vehicles crossing virtual stoplines using tracking algorithms to ensure accurate inbound vehicle counts.
-    \item \textbf{PCU Conversion:} Convert raw vehicle counts to Passenger Car Units (PCU) using IRC standards (car=1, bus=3, motorcycle=0.5, truck=2.5) and export the results to a JSON file (\texttt{outputs/intersection\_summary.json}).
+    \item \textbf{PCU Conversion:} Convert raw vehicle counts to Passenger Car Units (PCU) using IRC standards (car=1, bus=3, motorcycle=0.5, truck=3.0) and export the results to a JSON file (\texttt{outputs/intersection\_summary.json}).
 \end{itemize}
 
 The YOLO component serves as the data capture stage of the overall system. The captured PCU data is then used by subsequent components (Webster's method and SUMO simulation) for signal timing optimization and validation. YOLO itself does not perform optimization—it only provides the traffic flow data necessary for optimization algorithms.
@@ -44,7 +44,7 @@ After detection, the system performs counting and conversion:
         \item Car: 1.0 PCU
         \item Bus: 3.0 PCU
         \item Motorcycle: 0.5 PCU
-        \item Truck: 2.5 PCU
+        \item Truck: 3.0 PCU
         \item Bicycle: 0.2 PCU
     \end{itemize}
     \item \textbf{Data Export:} The final output is a JSON file (\texttt{outputs/intersection\_summary.json}) containing PCU totals for each approach (N, S, E, W), along with detailed vehicle counts by type.
@@ -54,8 +54,8 @@ Figure~\ref{fig:yolo_output} shows the Streamlit interface displaying YOLO detec
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\textwidth]{images/intersectoin1yolooutput.png}
-    \caption{Streamlit interface showing YOLO detection results for Intersection 1 (Jyoti Circle). The output displays vehicle counts by type (cars, buses, motorcycles, trucks) for each approach, PCU calculations using IRC standards, and a summary table showing total PCU values per approach. The interface allows users to review detection accuracy before exporting the data for signal optimization.}
+    \includegraphics[width=0.95\textwidth]{images/yolodetectionexample in one of the intersection.png}
+    \caption{YOLO detection example with bounding boxes highlighting classification outputs clearly.}
     \label{fig:yolo_output}
 \end{figure}
 
@@ -71,7 +71,7 @@ Figure~\ref{fig:vehicle_distribution} shows the vehicle type distribution across
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.9\textwidth]{images/vehicle_type_distribution.png}
-    \caption{Vehicle type distribution across approaches (NB, SB, EB, WB) from YOLO detection results. The chart shows the count of cars, buses, motorcycles, and trucks detected in each approach, which are then converted to PCU values using IRC standards (car=1, bus=3, motorcycle=0.5, truck=2.5). The distribution reveals that cars dominate traffic flow, with significant motorcycle presence and varying bus/truck counts across approaches.}
+    \caption{Vehicle type distribution across approaches derived from YOLO counts insights.}
     \label{fig:vehicle_distribution}
 \end{figure}
 

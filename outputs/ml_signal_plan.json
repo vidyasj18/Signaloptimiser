@@ -1,38 +1,30 @@
 {
   "method": "ML",
-  "cycle_length": 65.60897862988536,
+  "cycle_length": 60.15153120229612,
   "approaches": {
     "NB": {
-      "effective_green": 18.39956051920743,
-      "arrival_flow_rate": 2880.0,
+      "effective_green": 17.4843286574554,
+      "arrival_flow_rate": 2542.0,
       "saturation_flow_rate": 3600,
-      "green": 18.39956051920743,
+      "green": 17.4843286574554,
       "amber": 3.0,
-      "red": 44.20941811067793
+      "red": 39.66720254484072
     },
     "SB": {
-      "effective_green": 14.923920853107543,
+      "effective_green": 17.97407856762567,
       "arrival_flow_rate": 2760.0,
       "saturation_flow_rate": 3600,
-      "green": 14.923920853107543,
+      "green": 17.97407856762567,
       "amber": 3.0,
-      "red": 47.68505777677781
-    },
-    "EB": {
-      "effective_green": 8.18160729361671,
-      "arrival_flow_rate": 1560.0,
-      "saturation_flow_rate": 3600,
-      "green": 8.18160729361671,
-      "amber": 3.0,
-      "red": 54.42737133626865
+      "red": 39.177452634670445
     },
     "WB": {
-      "effective_green": 12.103889963953671,
-      "arrival_flow_rate": 3480.0,
+      "effective_green": 10.510921987961261,
+      "arrival_flow_rate": 1500.0,
       "saturation_flow_rate": 3600,
-      "green": 12.103889963953671,
+      "green": 10.510921987961261,
       "amber": 3.0,
-      "red": 50.50508866593169
+      "red": 46.64060921433486
     }
   }
 }

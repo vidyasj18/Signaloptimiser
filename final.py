@@ -12,7 +12,11 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 from datetime import datetime
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 PCU = {"N": 2542.0, "S": 2760.0, "E": 0.0, "W": 1500.0}
 PCU2 = {"N": 2880.0, "S": 2760.0, "E": 1560.0, "W": 3480.0}
@@ -282,10 +286,10 @@ def generate_and_save_training_csv(csv_path: str = 'outputs/synthetic_training_d
     print(f"Saved training CSV to {csv_path}")
     return df
 
-def train_models_from_csv(csv_path: str = 'outputs/synthetic_training_data.csv'):
+def train_models_from_csv(csv_path: str = 'outputs/synthetic_training_data.csv', calculate_metrics=True):
     """
     Load CSV and train ML models.
-    Returns (cycle_model, green_model, cycle_features, green_features)
+    Returns (cycle_model, green_model, cycle_features, green_features, metrics)
     """
     if not os.path.exists(csv_path):
         raise FileNotFoundError(f"Training CSV not found: {csv_path}. Run generate_and_save_training_csv() first.")
@@ -293,7 +297,7 @@ def train_models_from_csv(csv_path: str = 'outputs/synthetic_training_data.csv')
     print(f"Loading training data from {csv_path}")
     df = pd.read_csv(csv_path)
     print(f"Training ML models on {len(df)} samples...")
-    return train_models(df)
+    return train_models(df, calculate_metrics=calculate_metrics)
 
 # ============================================================================
 # FEATURE ENGINEERING
@@ -326,8 +330,11 @@ def extract_context_features(df: pd.DataFrame) -> pd.DataFrame:
 # MODEL TRAINING
 # ============================================================================
 
-def train_models(df: pd.DataFrame):
-    """Train ML models on training data (synthetic or real)"""
+def train_models(df: pd.DataFrame, calculate_metrics=True):
+    """
+    Train ML models on training data (synthetic or real)
+    Returns models, features, and optionally metrics
+    """
     df = extract_context_features(df)
     
     # 2a) Cycle prediction with context
@@ -335,8 +342,31 @@ def train_models(df: pd.DataFrame):
                       "weather_rain", "weather_heavy_rain", "weather_fog", "weather_snow"]
     X_cycle = df[cycle_features].values
     y_cycle = df["cycle"].values
+    
+    # Split for metrics calculation
+    if calculate_metrics and len(df) > 100:
+        X_cycle_train, X_cycle_test, y_cycle_train, y_cycle_test = train_test_split(
+            X_cycle, y_cycle, test_size=0.2, random_state=42
+        )
+    else:
+        X_cycle_train, X_cycle_test = X_cycle, X_cycle
+        y_cycle_train, y_cycle_test = y_cycle, y_cycle
+        calculate_metrics = False
+    
     cycle_model = RandomForestRegressor(n_estimators=200, random_state=42, max_depth=15)
-    cycle_model.fit(X_cycle, y_cycle)
+    cycle_model.fit(X_cycle_train, y_cycle_train)
+    
+    # Calculate cycle model metrics
+    cycle_metrics = None
+    if calculate_metrics:
+        y_cycle_pred = cycle_model.predict(X_cycle_test)
+        cycle_metrics = {
+            "r2_score": float(r2_score(y_cycle_test, y_cycle_pred)),
+            "rmse": float(np.sqrt(mean_squared_error(y_cycle_test, y_cycle_pred))),
+            "mae": float(mean_absolute_error(y_cycle_test, y_cycle_pred)),
+            "test_size": len(y_cycle_test),
+            "train_size": len(y_cycle_train)
+        }
     
     # 2b) Green time prediction with context
     green_features = ["N", "S", "E", "W", "hour", "has_event", "is_weekend",
@@ -344,10 +374,211 @@ def train_models(df: pd.DataFrame):
                       "NS", "EW"]
     X_greens = df[green_features].values
     y_greens = df[["gN", "gS", "gE", "gW"]].values
-    green_model = RandomForestRegressor(n_estimators=300, random_state=42, max_depth=20)
-    green_model.fit(X_greens, y_greens)
     
-    return cycle_model, green_model, cycle_features, green_features
+    # Split for metrics calculation
+    if calculate_metrics and len(df) > 100:
+        X_greens_train, X_greens_test, y_greens_train, y_greens_test = train_test_split(
+            X_greens, y_greens, test_size=0.2, random_state=42
+        )
+    else:
+        X_greens_train, X_greens_test = X_greens, X_greens
+        y_greens_train, y_greens_test = y_greens, y_greens
+    
+    green_model = RandomForestRegressor(n_estimators=300, random_state=42, max_depth=20)
+    green_model.fit(X_greens_train, y_greens_train)
+    
+    # Calculate green model metrics
+    green_metrics = None
+    if calculate_metrics:
+        y_greens_pred = green_model.predict(X_greens_test)
+        green_metrics = {
+            "gN": {
+                "r2_score": float(r2_score(y_greens_test[:, 0], y_greens_pred[:, 0])),
+                "rmse": float(np.sqrt(mean_squared_error(y_greens_test[:, 0], y_greens_pred[:, 0]))),
+                "mae": float(mean_absolute_error(y_greens_test[:, 0], y_greens_pred[:, 0]))
+            },
+            "gS": {
+                "r2_score": float(r2_score(y_greens_test[:, 1], y_greens_pred[:, 1])),
+                "rmse": float(np.sqrt(mean_squared_error(y_greens_test[:, 1], y_greens_pred[:, 1]))),
+                "mae": float(mean_absolute_error(y_greens_test[:, 1], y_greens_pred[:, 1]))
+            },
+            "gE": {
+                "r2_score": float(r2_score(y_greens_test[:, 2], y_greens_pred[:, 2])),
+                "rmse": float(np.sqrt(mean_squared_error(y_greens_test[:, 2], y_greens_pred[:, 2]))),
+                "mae": float(mean_absolute_error(y_greens_test[:, 2], y_greens_pred[:, 2]))
+            },
+            "gW": {
+                "r2_score": float(r2_score(y_greens_test[:, 3], y_greens_pred[:, 3])),
+                "rmse": float(np.sqrt(mean_squared_error(y_greens_test[:, 3], y_greens_pred[:, 3]))),
+                "mae": float(mean_absolute_error(y_greens_test[:, 3], y_greens_pred[:, 3]))
+            },
+            "test_size": len(y_greens_test),
+            "train_size": len(y_greens_train)
+        }
+    
+    # Feature importance
+    cycle_feature_importance = dict(zip(cycle_features, cycle_model.feature_importances_.tolist()))
+    green_feature_importance = dict(zip(green_features, green_model.feature_importances_.tolist()))
+    
+    metrics = {
+        "cycle_model": cycle_metrics,
+        "green_model": green_metrics,
+        "cycle_feature_importance": cycle_feature_importance,
+        "green_feature_importance": green_feature_importance,
+        "cycle_features": cycle_features,
+        "green_features": green_features
+    } if calculate_metrics else None
+    
+    return cycle_model, green_model, cycle_features, green_features, metrics
+
+# ============================================================================
+# SAVE METRICS AND GENERATE VISUALIZATIONS
+# ============================================================================
+
+def save_model_metrics(metrics: dict, output_dir: str = 'outputs'):
+    """Save model performance metrics to JSON file"""
+    if not metrics:
+        return None
+    
+    os.makedirs(output_dir, exist_ok=True)
+    metrics_file = os.path.join(output_dir, 'ml_model_performance.json')
+    
+    # Prepare metrics for JSON serialization
+    metrics_to_save = {
+        "cycle_model": metrics.get("cycle_model"),
+        "green_model": metrics.get("green_model"),
+        "cycle_feature_importance": metrics.get("cycle_feature_importance"),
+        "green_feature_importance": metrics.get("green_feature_importance"),
+        "timestamp": datetime.now().isoformat()
+    }
+    
+    with open(metrics_file, 'w') as f:
+        json.dump(metrics_to_save, f, indent=2, ensure_ascii=False)
+    
+    print(f"Saved model metrics to {metrics_file}")
+    return metrics_file
+
+def generate_model_visualizations(metrics: dict, models: tuple, df: pd.DataFrame, 
+                                 output_dir: str = 'report/images/ml_model_performance'):
+    """
+    Generate visualizations for ML model performance
+    models: (cycle_model, green_model, cycle_features, green_features)
+    """
+    if not metrics:
+        return []
+    
+    os.makedirs(output_dir, exist_ok=True)
+    cycle_model, green_model, cycle_features, green_features = models
+    
+    # Prepare data for visualization
+    df = extract_context_features(df)
+    
+    # Split data for predictions
+    X_cycle = df[cycle_features].values
+    y_cycle = df["cycle"].values
+    X_cycle_train, X_cycle_test, y_cycle_train, y_cycle_test = train_test_split(
+        X_cycle, y_cycle, test_size=0.2, random_state=42
+    )
+    
+    X_greens = df[green_features].values
+    y_greens = df[["gN", "gS", "gE", "gW"]].values
+    X_greens_train, X_greens_test, y_greens_train, y_greens_test = train_test_split(
+        X_greens, y_greens, test_size=0.2, random_state=42
+    )
+    
+    generated_files = []
+    
+    # 1. Cycle Model: Prediction vs Actual Scatter Plot
+    y_cycle_pred = cycle_model.predict(X_cycle_test)
+    plt.figure(figsize=(8, 6))
+    plt.scatter(y_cycle_test, y_cycle_pred, alpha=0.5)
+    plt.plot([y_cycle_test.min(), y_cycle_test.max()], 
+             [y_cycle_test.min(), y_cycle_test.max()], 'r--', lw=2)
+    plt.xlabel('Actual Cycle Length (s)')
+    plt.ylabel('Predicted Cycle Length (s)')
+    if metrics.get("cycle_model"):
+        r2 = metrics["cycle_model"]["r2_score"]
+        rmse = metrics["cycle_model"]["rmse"]
+        plt.title(f'Cycle Model: Prediction vs Actual\nR² = {r2:.4f}, RMSE = {rmse:.2f}s')
+    else:
+        plt.title('Cycle Model: Prediction vs Actual')
+    plt.grid(True, alpha=0.3)
+    cycle_scatter_file = os.path.join(output_dir, 'cycle_prediction_scatter.png')
+    plt.savefig(cycle_scatter_file, dpi=300, bbox_inches='tight')
+    plt.close()
+    generated_files.append(cycle_scatter_file)
+    
+    # 2. Cycle Model: Feature Importance
+    if metrics.get("cycle_feature_importance"):
+        importance_dict = metrics["cycle_feature_importance"]
+        features = list(importance_dict.keys())
+        importances = list(importance_dict.values())
+        # Sort by importance
+        sorted_idx = np.argsort(importances)[::-1]
+        features_sorted = [features[i] for i in sorted_idx[:10]]  # Top 10
+        importances_sorted = [importances[i] for i in sorted_idx[:10]]
+        
+        plt.figure(figsize=(10, 6))
+        plt.barh(features_sorted, importances_sorted)
+        plt.xlabel('Feature Importance')
+        plt.title('Cycle Model: Top 10 Feature Importance')
+        plt.gca().invert_yaxis()
+        plt.grid(True, alpha=0.3, axis='x')
+        cycle_importance_file = os.path.join(output_dir, 'cycle_feature_importance.png')
+        plt.savefig(cycle_importance_file, dpi=300, bbox_inches='tight')
+        plt.close()
+        generated_files.append(cycle_importance_file)
+    
+    # 3. Green Split Model: Prediction vs Actual (4 subplots)
+    y_greens_pred = green_model.predict(X_greens_test)
+    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+    axes = axes.flatten()
+    approaches = ['gN', 'gS', 'gE', 'gW']
+    
+    for idx, approach in enumerate(approaches):
+        ax = axes[idx]
+        y_actual = y_greens_test[:, idx]
+        y_pred = y_greens_pred[:, idx]
+        ax.scatter(y_actual, y_pred, alpha=0.5)
+        ax.plot([y_actual.min(), y_actual.max()], 
+                [y_actual.min(), y_actual.max()], 'r--', lw=2)
+        ax.set_xlabel(f'Actual {approach} (s)')
+        ax.set_ylabel(f'Predicted {approach} (s)')
+        if metrics.get("green_model") and approach in metrics["green_model"]:
+            gm = metrics["green_model"][approach]
+            ax.set_title(f'{approach}: R² = {gm["r2_score"]:.4f}, RMSE = {gm["rmse"]:.2f}s')
+        else:
+            ax.set_title(f'{approach}: Prediction vs Actual')
+        ax.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    green_scatter_file = os.path.join(output_dir, 'green_split_prediction_scatter.png')
+    plt.savefig(green_scatter_file, dpi=300, bbox_inches='tight')
+    plt.close()
+    generated_files.append(green_scatter_file)
+    
+    # 4. Green Split Model: Feature Importance
+    if metrics.get("green_feature_importance"):
+        importance_dict = metrics["green_feature_importance"]
+        features = list(importance_dict.keys())
+        importances = list(importance_dict.values())
+        sorted_idx = np.argsort(importances)[::-1]
+        features_sorted = [features[i] for i in sorted_idx[:10]]
+        importances_sorted = [importances[i] for i in sorted_idx[:10]]
+        
+        plt.figure(figsize=(10, 6))
+        plt.barh(features_sorted, importances_sorted)
+        plt.xlabel('Feature Importance')
+        plt.title('Green Split Model: Top 10 Feature Importance')
+        plt.gca().invert_yaxis()
+        plt.grid(True, alpha=0.3, axis='x')
+        green_importance_file = os.path.join(output_dir, 'green_split_feature_importance.png')
+        plt.savefig(green_importance_file, dpi=300, bbox_inches='tight')
+        plt.close()
+        generated_files.append(green_importance_file)
+    
+    print(f"Generated {len(generated_files)} visualization files in {output_dir}")
+    return generated_files
 
 # ============================================================================
 # PREDICTION WITH CONTEXT
@@ -513,8 +744,19 @@ if __name__ == "__main__":
     
     # Train models
     print("Training ML models with contextual features...")
-    cycle_model, green_model, cycle_features, green_features = train_models_from_csv(csv_path)
+    cycle_model, green_model, cycle_features, green_features, metrics = train_models_from_csv(csv_path)
     print("Model training complete.")
+    
+    if metrics:
+        print("\n=== Model Performance Metrics ===")
+        if metrics["cycle_model"]:
+            print(f"Cycle Model - R²: {metrics['cycle_model']['r2_score']:.4f}, RMSE: {metrics['cycle_model']['rmse']:.2f}s, MAE: {metrics['cycle_model']['mae']:.2f}s")
+        if metrics["green_model"]:
+            print("Green Split Model:")
+            for approach in ["gN", "gS", "gE", "gW"]:
+                if approach in metrics["green_model"]:
+                    gm = metrics["green_model"][approach]
+                    print(f"  {approach} - R²: {gm['r2_score']:.4f}, RMSE: {gm['rmse']:.2f}s, MAE: {gm['mae']:.2f}s")
     
     # Predict signal plan
     output_path = 'outputs/ml_signal_plan.json'

@@ -1,6 +1,6 @@
 Traffic Signal Timing Optimization and Planning Recommendations for Urban Intersections
 
-               Mini Project –I (CV380) Report
+               Mini Project -I (CV380) Report
                submitted in partial fulfilment of the required degree of
 
              BACHELOR OF TECHNOLOGY 
@@ -124,10 +124,10 @@ CHAPTER 3 - Methodology	15
 CHAPTER 4 - Signal Optimization using Machine Learning Models(Linear Regression , Random Forests)	19
 4.1 Linear Regression	19
 4.2 Random Forests	19
-4.3 Webster’s Method	20
+4.3 Webster's Method	20
 4.4 Traffic Signal Optimization Formulas	20
 4.5 Data Set used	21
-4.6 Rationale for Integrating Machine Learning with Webster’s Traffic Signal Method	22
+4.6 Rationale for Integrating Machine Learning with Webster's Traffic Signal Method	22
 4.7 Workflow: Input , Output and Working	23
 4.8 Constraints faced while applying the method	27
 
@@ -136,7 +136,7 @@ CHAPTER 5 - Traffic Signal Optimization with YOLO Detection and Phase Diagram Vi
 5.2 YOLO(You Only Look Once)	29
 5.3 Setup and Installation steps of the project	29
 5.4 Workflow	31
-5.5 Role of Webster’s method and ML algorithms in this method	32
+5.5 Role of Webster's method and ML algorithms in this method	32
 5.6  Quantifying contribution (approximate ratio) of Webster method and ML models	32
 5.7 Results and Analysis	33
 5.8 Comparative Analysis	35
@@ -156,7 +156,7 @@ CHAPTER 7 - CONCLUSION	55
 CHAPTER 1  - Abstract
 1.1 Summary of Objectives
 
-The primary objective of this project is to optimize traffic signal timings at key urban intersections in Mangalore using a blend of traditional traffic engineering principles (such as Webster’s method) and modern machine learning techniques. By collecting and analyzing real-world traffic data, the project aims to:
+The primary objective of this project is to optimize traffic signal timings at key urban intersections in Mangalore using a blend of traditional traffic engineering principles (such as Webster's method) and modern machine learning techniques. By collecting and analyzing real-world traffic data, the project aims to:
 Improve traffic flow and reduce congestion:
 Design traffic signal plans that minimize vehicle delays and enhance movement efficiency at critical city junctions.
 Assess the impact of current and proposed signal timings:
@@ -177,9 +177,9 @@ The project involves the careful selection of two urban intersections in Mangalo
 Data-Driven Approach:
 Real-time, location-specific video data and manual counts form the basis for accurate traffic volume assessment. The use of an Insta360 camera, adopted to overcome adverse weather and equipment shortages, ensures comprehensive observation of vehicular movements with minimal manpower.
 Standards-Based Methodology:
-All analyses, designs, and recommendations are grounded in established traffic engineering norms, such as IRC:106-1990 and Webster’s method, offering reliability and consistency with professional standards.
+All analyses, designs, and recommendations are grounded in established traffic engineering norms, such as IRC:106-1990 and Webster's method, offering reliability and consistency with professional standards.
 Quantitative Signal Optimization:
-The project applies Webster’s formula to determine optimal cycle lengths and allocate green splits for each phase, forming the foundation of the signal design for the studied intersections.
+The project applies Webster's formula to determine optimal cycle lengths and allocate green splits for each phase, forming the foundation of the signal design for the studied intersections.
 Integration of Machine Learning:
 Statistical and machine learning models (Linear Regression, Random Forest), developed in Python, are utilized to predict optimal signal timings and green times, introducing adaptive intelligence and enhancing traditional calculation methods.
 User-Friendly Outputs:
@@ -227,7 +227,7 @@ Formulation of evidence-based recommendations for future signal upgrades and ope
 2.4 Scope and Limitations of the Project
 
 Scope of the Project
-The scope of this project encompasses the detailed study, analysis, and optimization of traffic signal timings at two critical urban intersections in Mangalore. It covers comprehensive field data collection using both manual counts and modern video analytics to accurately quantify traffic volumes and movement patterns. The project applies standard traffic engineering methodologies, such as Webster’s formula, alongside machine learning models to design and recommend optimal signal cycles and green splits tailored to each site. Furthermore, it involves the creation of visualization tools—including signal phasing diagrams and charts—to clearly communicate proposed improvements. The project’s recommendations are intended to serve as a replicable framework for similar intersections facing congestion issues and provide actionable insights for local authorities seeking effective, data-driven traffic management solutions.
+The scope of this project encompasses the detailed study, analysis, and optimization of traffic signal timings at two critical urban intersections in Mangalore. It covers comprehensive field data collection using both manual counts and modern video analytics to accurately quantify traffic volumes and movement patterns. The project applies standard traffic engineering methodologies, such as Webster's formula, alongside machine learning models to design and recommend optimal signal cycles and green splits tailored to each site. Furthermore, it involves the creation of visualization tools—including signal phasing diagrams and charts—to clearly communicate proposed improvements. The project's recommendations are intended to serve as a replicable framework for similar intersections facing congestion issues and provide actionable insights for local authorities seeking effective, data-driven traffic management solutions.
 Limitations of the Project
 Several limitations constrain the outcomes of this project. The study is restricted to only two intersections within the city, which may limit the generalizability of the findings to all urban situations in Mangalore. Field data was collected over a limited time period and may not fully capture seasonal, weekly, or special-event fluctuations in traffic patterns. Equipment constraints, weather-related disruptions, and occasional manual measurement errors could also have influenced the accuracy of certain observations. Additionally, the scope for implementing and testing adaptive real-time signal control was limited due to resource and time constraints; as a result, recommendations are based on periodic data analysis rather than on dynamic, continuous traffic monitoring. External factors—such as pedestrian behavior, unauthorized street usage, and enforcement of traffic rules—were considered only to the extent observable during the field study, and may affect the practical impact of the proposed signal changes.
 2.5 Research Methodology and Approach
@@ -235,7 +235,7 @@ Several limitations constrain the outcomes of this project. The study is restric
 Selected two representative intersections in Mangalore: one signalized (Jyoti Circle), one manually controlled (KMC Hospital junction)
 Conducted comprehensive field data collection using manual vehicle counts and Insta360 camera video recordings during peak and off-peak periods
 Tabulated traffic volumes and movement patterns for all approaches to each intersection
-Applied Webster’s method (as per IRC:106-1990) to calculate optimum signal cycle length and allocate green times based on observed demand
+Applied Webster's method (as per IRC:106-1990) to calculate optimum signal cycle length and allocate green times based on observed demand
 Developed and used machine learning models (Linear Regression, Random Forest in Python) to predict cycle times and validate standard engineering outputs
 Created optimized signal phasing diagrams and visualized results for recommended timing strategies
 Documented practical fieldwork challenges and employed adaptive solutions to ensure accurate data collection and analysis
@@ -253,8 +253,8 @@ Validation & Visualization: To validate the optimized signal timings by computin
 3.2 Selection of Study Intersections
 The project began with identifying suitable intersections within Mangalore city for signal optimization. Potential sites were shortlisted using Google Maps, Google Earth, and field reconnaissance visits. Selection was based on traffic density, presence or absence of signals, feasibility of camera placement, and safety for manual observation.
  Two intersections were finalized:
-Jyoti Circle – A busy three-arm junction, manually controlled by traffic police.
-Hampankatta Circle – A four-arm intersection with non-functional signals and movement restrictions via barricades.
+Jyoti Circle - A busy three-arm junction, manually controlled by traffic police.
+Hampankatta Circle - A four-arm intersection with non-functional signals and movement restrictions via barricades.
 These intersections were approved as practical and representative study locations.
 3.3  Field Data Collection
  Initial Plan - The team initially planned to deploy multiple cameras on tripods to capture traffic movements in each leg of both intersections.
@@ -272,9 +272,9 @@ Each intersection was recorded for 30 minutes, and the videos were processed for
 3.4.1 Jupyter Notebook Setup
 
 A Jupyter Notebook was developed to compute traffic signal timings using classical traffic engineering methods and machine-learning models. The notebook performs:
-Optimum cycle time calculation using Webster’s Method
+Optimum cycle time calculation using Webster's Method
 Green split allocation for each approach
-Average vehicle delay estimation through Webster’s delay formula
+Average vehicle delay estimation through Webster's delay formula
 Prediction of cycle time and green splits using Linear Regression and Random Forest models
 All code was uploaded to a GitHub repository for version control and transparency.
 3.4.2 Model Training
@@ -284,7 +284,7 @@ Synthetic datasets representing varied traffic volumes were prepared.
 Models were trained for predicting cycle length as well as lane-wise green timings.
 
 
-Initial out-of-distribution issues (low training range vs high real PCU) were later corrected by expanding the dataset range to 100–4000 PCU.
+Initial out-of-distribution issues (low training range vs high real PCU) were later corrected by expanding the dataset range to 100-4000 PCU.
 
 3.5 YOLO-Based Vehicle Detection and PCU Estimation
 
@@ -359,7 +359,7 @@ Linear regression is a fundamental statistical modeling technique used in traffi
 4.2 Random Forests
 Random Forest is an ensemble machine learning algorithm that combines multiple decision trees to make more accurate and robust predictions through a "wisdom of the crowds" approach.The algorithm creates numerous decision trees during training, each built on a random subset of the data (bootstrap sampling) and considering only a random subset of features at each split. For predictions, it aggregates results from all trees - taking the majority vote for classification or the average for regression.
 Random Forest is highly effective for traffic optimization due to its ability to capture complex, non-linear relationships between multiple traffic variables such as historical patterns, weather conditions, accidents, and real-time sensor data. The algorithm excels at predicting congestion levels, classifying traffic states, and enabling adaptive traffic signal control systems that automatically adjust timings based on forecasted conditions. It is particularly valuable for incident detection, identifying accidents from anomalous patterns with high accuracy, and for route optimization by predicting travel times across different paths considering multiple factors simultaneously.
-4.3 Webster’s Method
+4.3 Webster's Method
 The Webster method, also known as the Webster's method of apportionment or in traffic engineering as Webster's delay formula, is used to optimize traffic signal timing by minimizing average vehicle delay at intersections. In signal control, it calculates optimal cycle length based on traffic flows from different approaches, balancing the trade-off between minimizing stops and reducing overall waiting time to improve intersection efficiency and throughput.
 In this project Webster method was used to train the Machine learning models so that we can optimize and predict the traffic values.
 
@@ -369,7 +369,7 @@ In this project Webster method was used to train the Machine learning models so 
 Formula
 Equation
 Description
-Optimum Cycle Time (Webster’s Formula)
+Optimum Cycle Time (Webster's Formula)
 Co = (1.5*L + 5) / (1 - y), 
 Calculates the optimum cycle length. L = lost time,y - is the summation of the critical flow ratio at all the phases
 Green Time Allocation
@@ -449,16 +449,16 @@ TURN RATIO.XLSX FILE
 
 
 
-4.6 Rationale for Integrating Machine Learning with Webster’s Traffic Signal Method
-Teacher (Webster): We generate many synthetic traffic scenarios (N,S,E,W) and compute “ideal” labels using Webster’s proportional splits and cycle formula. This encodes accepted traffic‑engineering behavior.
+4.6 Rationale for Integrating Machine Learning with Webster's Traffic Signal Method
+Teacher (Webster): We generate many synthetic traffic scenarios (N,S,E,W) and compute “ideal” labels using Webster's proportional splits and cycle formula. This encodes accepted traffic‑engineering behavior.
 Student (ML):
-Linear Regression learns a simple mapping from (NS, EW) → cycle, close to Webster’s relationship in the operating range.
+Linear Regression learns a simple mapping from (NS, EW) → cycle, close to Webster's relationship in the operating range.
 RandomForest learns a robust mapping from (N, S, E, W) → (gN, gS, gE, gW), capturing mild nonlinearities and being resilient to noise.
 Inference time: We predict cycle and greens with ML, then normalize greens to the effective green (C − lost_time) to maintain feasibility, and finally apply fixed Amber and All‑red.
 We keep Webster for structure, but use ML to regularize and stabilize outputs in the presence of real‑world noise and partial coverage.
 Cycle length model — Linear Regression
 Inputs: (NS, EW) totals; Output: cycle length.
-Rationale: Webster’s cycle is monotonic in the overall loading. A linear regressor provides an interpretable, low‑variance fit that closely matches the synthetic Webster mapping while tolerating small measurement noise. It’s easy to clamp to [60, 180] s and inspect coefficients.
+Rationale: Webster's cycle is monotonic in the overall loading. A linear regressor provides an interpretable, low‑variance fit that closely matches the synthetic Webster mapping while tolerating small measurement noise. It's easy to clamp to [60, 180] s and inspect coefficients.
 Benefits: interpretable, fast, and sufficient because the mapping from aggregate load to cycle is close to linear in the operational range after clamping and capping Y.
 Green split model — RandomForestRegressor (ensemble of decision trees)
 Inputs: (N, S, E, W); Output: per‑approach green seconds (gN, gS, gE, gW).
@@ -508,14 +508,14 @@ Represents the average waiting time experienced by all vehicles
 Lower values indicate better timing optimization
 Used to evaluate and compare different signal timing strategies
 
-Here, for each direction the total green timing is the summation of green timings of it’s Left, Right and Through.
+Here, for each direction the total green timing is the summation of green timings of it's Left, Right and Through.
 Hence, the green signal timings for each lane is:
 
 WORKING
 Input Traffic Demand: The system receives 12 movement-specific vehicle counts, representing left, through, and right turns for each of the 4 approaches (north, south, east, and west). These inputs quantify the hourly demand for each specific turning movement at the intersection.
 
 
-Optimal Cycle Length Estimation: A linear regression model is used to predict the optimal signal cycle length based on the aggregate traffic load for the north–south and east–west approaches. This prediction balances operational efficiency with adequate service time across all movements.
+Optimal Cycle Length Estimation: A linear regression model is used to predict the optimal signal cycle length based on the aggregate traffic load for the north-south and east-west approaches. This prediction balances operational efficiency with adequate service time across all movements.
 
 
 Green Time Allocation: A random forest model allocates green time across the 12 movements in proportion to their respective demand levels. Higher-demand movements receive greater green time, while lower-demand movements receive less, ensuring the total allocation fits within the available cycle time after accounting for clearance intervals.
@@ -524,7 +524,7 @@ Green Time Allocation: A random forest model allocates green time across the 12 
 Generation of the Timing Plan and Performance Metrics: The system outputs lane-specific green times (12 values) and approach-level green times (4 values), along with the calculated average vehicle delay. These results form a complete timing plan suitable for implementation in standard traffic signal.
 
 4.8 Constraints faced while applying the method 
-     In Activity 3, the team initially developed a model using standard machine learning algorithms trained on a publicly available dataset obtained from an online source. During the subsequent stages of development, an alternative approach was implemented wherein a new training pipeline was designed using the same ML algorithms but trained on a synthetically generated dataset tailored to the specific problem domain. This synthetic dataset enabled better control over class balance and inclusion of edge cases that were underrepresented in the original dataset, thereby enhancing the model’s robustness for the target scenarios. 
+     In Activity 3, the team initially developed a model using standard machine learning algorithms trained on a publicly available dataset obtained from an online source. During the subsequent stages of development, an alternative approach was implemented wherein a new training pipeline was designed using the same ML algorithms but trained on a synthetically generated dataset tailored to the specific problem domain. This synthetic dataset enabled better control over class balance and inclusion of edge cases that were underrepresented in the original dataset, thereby enhancing the model's robustness for the target scenarios. 
      The newly trained model was then integrated into the YOLO-based detection framework. To streamline maintenance and deployment, the team consolidated the original and newly developed model code into a single, well-structured file instead of multiple separate scripts. This integration reduced file redundancy, improved reproducibility, and simplified version control and testing. Overall, the incorporation of synthetic data augmentation, code optimization, and codebase consolidation led to a more efficient development workflow, faster experimentation, and improved performance of the model within the YOLO inference pipeline.
 
 CHAPTER 5 - Traffic Signal Optimization with YOLO Detection and Phase Diagram Visualization
@@ -579,18 +579,18 @@ Route Generation: Creates vehicle routes (.rou.xml) based on PCU values, with in
 Simulation Execution: Runs identical simulations for both ML-based and Webster-based plans under the same traffic conditions (3600 seconds, same vehicle flows).
 Performance Extraction: Extracts comprehensive metrics including average delay, waiting time, travel time, time loss, and throughput from SUMO tripinfo outputs.
 Comparison & Reporting: Generates detailed comparison reports showing which method performs better across multiple metrics, with results saved to JSON format for further analysis.
-5.5 Role of Webster’s method and ML algorithms in this method
-Our model integrates Webster’s signal timing theory with machine learning-based prediction models.The dataset for training was generated using Webster’s equations for different PCU combinations.The ML models (Linear Regression and Random Forest) were trained on this data to learn the relationship between traffic flow and optimal signal timings.At runtime, the ML models predict approximate cycle length and green times, which are then refined and normalised using Webster’s constraints (lost time, phase balance, and safety margins).
+5.5 Role of Webster's method and ML algorithms in this method
+Our model integrates Webster's signal timing theory with machine learning-based prediction models.The dataset for training was generated using Webster's equations for different PCU combinations.The ML models (Linear Regression and Random Forest) were trained on this data to learn the relationship between traffic flow and optimal signal timings.At runtime, the ML models predict approximate cycle length and green times, which are then refined and normalised using Webster's constraints (lost time, phase balance, and safety margins).
 5.6  Quantifying contribution (approximate ratio) of Webster method and ML models
 If we think of “contribution” in terms of how much each component determines the final output:
 Component
 Contribution to final signal timings
 Webster method
-~80–85% (defines ground truth, logic, formulas, constraints)
+~80-85% (defines ground truth, logic, formulas, constraints)
 Machine Learning models
-~15–20% (predict approximations, speed up runtime estimation)
+~15-20% (predict approximations, speed up runtime estimation)
 
-This ratio reflects their influence, not code length — since all “intelligence” in the output still follows Webster’s relationships.
+This ratio reflects their influence, not code length — since all “intelligence” in the output still follows Webster's relationships.
 5.7 Results and Analysis
 We successfully processed two key intersections. A critical finding was an out-of-distribution (OOD) data problem. Our initial models, trained on synthetic data (100-1200 PCU), failed when processing real-world data (PCUs > 3000), defaulting to a 60s minimum. We corrected this by re-training our models on a wider synthetic dataset (100-4000 PCU), which produced the accurate results below.
 Intersection 1: Jyoti Circle (3-Approach Y-Junction)
@@ -603,7 +603,7 @@ PHASE DIAGRAMS FOR HAMPANKATTA CIRCLE
 Analysis: This intersection had 57% higher total traffic (10,680 PCU), with high PCU values (W=3480) indicating heavy bus routes. The model correctly identified that the 60s minimum was insufficient and predicted a longer 92.07s cycle to handle this high saturation.
 Furthermore, the model demonstrated proportional splitting within a phase. The EW phase's demand was uneven (W: 3480 vs. E: 1560, a 2.2:1 ratio). Our model correctly assigned nearly double the green time to the Westbound approach (24.76s) compared to the Eastbound (12.53s).
 Comparison Between Traditional Webster Method and Proposed Hybrid Model (Webster + ML)
-To evaluate the effectiveness of the developed Signal Optimiser Model, a comparative analysis was conducted between the traditional Webster method and the proposed hybrid model that integrates Webster’s formula with machine learning algorithms. The comparison was primarily focused on the green time allocation for each leg of a four-legged intersection.
+To evaluate the effectiveness of the developed Signal Optimiser Model, a comparative analysis was conducted between the traditional Webster method and the proposed hybrid model that integrates Webster's formula with machine learning algorithms. The comparison was primarily focused on the green time allocation for each leg of a four-legged intersection.
 In the traditional Webster method, the green time is calculated purely based on traffic flow ratios derived from fixed parameters and empirical relationships. While this approach provides a theoretical optimum under idealized conditions, it does not dynamically adapt to real-time variations in traffic density or changing vehicle composition.
 In contrast, our proposed Webster + ML model incorporates real-time PCU values derived from the YOLO-based detection system. The machine learning component refines the green time allocation by learning from synthetic and real traffic data, allowing it to make data-driven adjustments that better reflect actual traffic behavior.
 Upon comparison, it was observed that the green times obtained from the hybrid model were generally lower than those derived from the traditional Webster method. This indicates that the proposed model more effectively optimizes signal duration by reducing excessive green times in low-traffic legs and balancing the overall cycle time to minimize total delay. The reduction in green time reflects a more efficient distribution of available cycle time across all approaches, ensuring smoother and fairer traffic flow.
@@ -616,7 +616,7 @@ Intersection 1: Green time allocation from the traditional Webster method
 
 
 
-This comparison clearly demonstrates that the integration of machine learning with Webster’s method results in a more adaptive and efficient signal optimization framework. The proposed model provides improved timing distribution and reduced total cycle duration while maintaining smooth traffic coordination and minimizing intersection delay.
+This comparison clearly demonstrates that the integration of machine learning with Webster's method results in a more adaptive and efficient signal optimization framework. The proposed model provides improved timing distribution and reduced total cycle duration while maintaining smooth traffic coordination and minimizing intersection delay.
 
 5.8 Comparative Analysis
 Metric
@@ -713,21 +713,21 @@ The simulation validated that the ML model's training on real-world patterns (ti
 
 
 5.9 Optimization and Validation 
-The optimisation process in this project focuses on determining the most efficient signal timings to minimise total intersection delay and enhance vehicular flow efficiency. A hybrid optimisation framework was developed that integrates the analytical strength of Webster’s Method with the predictive capabilities of Machine Learning (ML) models.
-The Webster method serves as the core analytical model, providing a mathematical basis for computing the optimal cycle length and green time allocation based on approach volumes, lost time, and saturation flow. These calculations are designed to minimise average vehicle delay and ensure a balanced distribution of green time among different approaches. To generate sufficient data for learning, a synthetic dataset was created using Webster’s equations for thousands of random traffic flow combinations. This dataset establishes a reliable relationship between approach-wise traffic volumes (in PCUs) and their corresponding optimal signal timings.
-To enhance scalability and adaptability, Machine Learning models—specifically Linear Regression and Random Forest Regressor—were trained on the synthetic dataset. The Linear Regression model predicts the overall cycle length using aggregated approach volumes (North-South and East-West), while the Random Forest model predicts the distribution of green times for each individual approach. These ML models effectively learn the patterns from Webster’s optimised outputs, enabling quick and adaptive prediction of signal timings for new or dynamic traffic inputs. After ML prediction, the results are refined using Webster’s constraints such as lost time, effective green time, and phase balance, ensuring realistic and safe signal plans.
-Thus, optimisation in this system is achieved through a hybrid approach—Webster’s equations perform mathematical optimisation, and ML enhances generalisation, prediction speed, and adaptability to varying traffic conditions.
+The optimisation process in this project focuses on determining the most efficient signal timings to minimise total intersection delay and enhance vehicular flow efficiency. A hybrid optimisation framework was developed that integrates the analytical strength of Webster's Method with the predictive capabilities of Machine Learning (ML) models.
+The Webster method serves as the core analytical model, providing a mathematical basis for computing the optimal cycle length and green time allocation based on approach volumes, lost time, and saturation flow. These calculations are designed to minimise average vehicle delay and ensure a balanced distribution of green time among different approaches. To generate sufficient data for learning, a synthetic dataset was created using Webster's equations for thousands of random traffic flow combinations. This dataset establishes a reliable relationship between approach-wise traffic volumes (in PCUs) and their corresponding optimal signal timings.
+To enhance scalability and adaptability, Machine Learning models—specifically Linear Regression and Random Forest Regressor—were trained on the synthetic dataset. The Linear Regression model predicts the overall cycle length using aggregated approach volumes (North-South and East-West), while the Random Forest model predicts the distribution of green times for each individual approach. These ML models effectively learn the patterns from Webster's optimised outputs, enabling quick and adaptive prediction of signal timings for new or dynamic traffic inputs. After ML prediction, the results are refined using Webster's constraints such as lost time, effective green time, and phase balance, ensuring realistic and safe signal plans.
+Thus, optimisation in this system is achieved through a hybrid approach—Webster's equations perform mathematical optimisation, and ML enhances generalisation, prediction speed, and adaptability to varying traffic conditions.
 For validation, two complementary levels of testing were performed:
 Phase Diagram Validation:
  The system generates a phase-based timeline that visualises each phase (green, amber, and red) for the North-South and East-West directions. This diagram ensures correct sequencing, accurate cycle length, and safe inter-phase intervals (amber and all-red). It validates that each approach receives a proportional and realistic green time based on its traffic demand.
 
 
 Simulation Validation:
- The system includes two simulation modes: “Start Simulation”, which outputs the phase diagram and timing schedule, and “Run Full Simulation”, which computes and saves the number of PCUs cleared per approach. The simulation results confirm that the optimised timings allow efficient queue clearance, maintain balance between conflicting movements, and follow the theoretical expectations of Webster’s model.
+ The system includes two simulation modes: “Start Simulation”, which outputs the phase diagram and timing schedule, and “Run Full Simulation”, which computes and saves the number of PCUs cleared per approach. The simulation results confirm that the optimised timings allow efficient queue clearance, maintain balance between conflicting movements, and follow the theoretical expectations of Webster's model.
 
 
-Additionally, the ML model predictions were compared against Webster’s analytical outputs and found to closely match them, validating that the ML models successfully learned the underlying optimisation logic.
-In conclusion, the optimisation combines analytical precision (Webster’s Method) with predictive intelligence (Machine Learning), and the validation through phase diagram and simulation confirms that the system effectively produces optimised, reliable, and traffic-responsive signal timings.
+Additionally, the ML model predictions were compared against Webster's analytical outputs and found to closely match them, validating that the ML models successfully learned the underlying optimisation logic.
+In conclusion, the optimisation combines analytical precision (Webster's Method) with predictive intelligence (Machine Learning), and the validation through phase diagram and simulation confirms that the system effectively produces optimised, reliable, and traffic-responsive signal timings.
 
 5.10 Key Inferences
 Total PCU Dictates Cycle Length: We confirmed that higher total intersection traffic (like at Hampankatta, with its heavy bus routes) directly results in a longer predicted cycle time to manage the saturation.
@@ -745,7 +745,7 @@ The diagram clearly displays:
 The order and duration of each signal phase.
 
 
-Green–Amber–Red intervals for every leg.
+Green-Amber-Red intervals for every leg.
 
 
 Transition and clearance times to prevent conflicting movements.
@@ -755,7 +755,7 @@ This visual representation allows for quick interpretation of how the optimized 
 5.11.4 Simulation Modules
 To make the model more interactive and demonstrative, two simulation modules have been developed: Start Simulation and Run Full Simulation.
 Start Simulation:
- This simulator generates the optimized signal timings and the phase diagram for the intersection. It allows users to visualize how each phase changes over time based on the calculated values. The simulation dynamically shows how green, amber, and red signals operate for each leg according to the optimizer’s results.
+ This simulator generates the optimized signal timings and the phase diagram for the intersection. It allows users to visualize how each phase changes over time based on the calculated values. The simulation dynamically shows how green, amber, and red signals operate for each leg according to the optimizer's results.
 Tools used : Ultralytics, Yolo, plotly.express, plotly.graph_objects
 
 
@@ -783,7 +783,7 @@ DASHBOARD SCREEN FOR THE SIMULATOR
 RUNNING THE SIMULATOR AFTER UPLOADING THE 4 INPUT VIDEOS
 In the Adaptive Traffic Signal Simulator, the system is designed to accept four input video streams, each corresponding to one leg of a four-legged intersection — namely Northbound, Southbound, Eastbound, and Westbound. These videos serve as the primary input data for the simulation process.
 Each video feed is processed using the YOLO (You Only Look Once) object detection model, which accurately identifies and counts the number of vehicles passing through each approach in real-time. The detected vehicle counts are then converted into Passenger Car Units (PCUs) to standardize traffic volumes across different vehicle types.
-Once the PCUs from all four legs are obtained, the Machine Learning-based optimisation model processes this data to determine the optimal cycle length and green, amber, and red times for each direction. Using these computed timings, the simulator generates a Phase Diagram, which visually represents how the signal phases transition between the North–South and East–West directions during a complete signal cycle.
+Once the PCUs from all four legs are obtained, the Machine Learning-based optimisation model processes this data to determine the optimal cycle length and green, amber, and red times for each direction. Using these computed timings, the simulator generates a Phase Diagram, which visually represents how the signal phases transition between the North-South and East-West directions during a complete signal cycle.
 This approach ensures that the simulator accurately reflects real-world adaptive traffic control behavior, where live data from all approaches is used to dynamically optimise signal timings. As a result, the system provides a realistic, data-driven phase diagram that helps visualize how signal timings adapt to current traffic demand across the intersection.
 
 
@@ -801,8 +801,8 @@ This approach ensures that the simulator accurately reflects real-world adaptive
 5.12.3 Model Output Description and Interpretation
 
 OUTPUT WINDOW AFTER RUNNING THE SIMULATOR
-The developed model provides the optimized signal timings for each approach of an intersection in all four directions — namely Northbound (NB), Southbound (SB), Eastbound (EB), and Westbound (WB). These timings are generated in seconds and presented in a dictionary format in Python, which allows for clear and structured access to each direction’s green, amber, and red durations.
-In addition to the numerical output, the model also produces a Phase Diagram, which visually represents the signal sequence and duration for the North–South (NS) and East–West (EW) directions. This phase diagram helps in understanding how the signal transitions occur between the two major phases — from green to amber and then to red.
+The developed model provides the optimized signal timings for each approach of an intersection in all four directions — namely Northbound (NB), Southbound (SB), Eastbound (EB), and Westbound (WB). These timings are generated in seconds and presented in a dictionary format in Python, which allows for clear and structured access to each direction's green, amber, and red durations.
+In addition to the numerical output, the model also produces a Phase Diagram, which visually represents the signal sequence and duration for the North-South (NS) and East-West (EW) directions. This phase diagram helps in understanding how the signal transitions occur between the two major phases — from green to amber and then to red.
 The diagram incorporates critical components of real-world signal control such as:
 Lost Time, which represents the time lost during phase changes (e.g., driver reaction time and vehicle clearance time).
 
@@ -810,7 +810,7 @@ Lost Time, which represents the time lost during phase changes (e.g., driver rea
 All-Red Time, which is introduced between two phases to ensure complete clearance of the intersection before the next phase begins, enhancing safety.
 
 
-Through this representation, the model ensures that the signal timings are not only optimized for flow efficiency but also comply with operational safety constraints. The phase diagram therefore provides a clear, visual verification of the model’s output, showing the logical sequencing of traffic movements and the corresponding intervals for each color phase.
+Through this representation, the model ensures that the signal timings are not only optimized for flow efficiency but also comply with operational safety constraints. The phase diagram therefore provides a clear, visual verification of the model's output, showing the logical sequencing of traffic movements and the corresponding intervals for each color phase.
 Overall, this output mechanism effectively links machine-learned predictions with traffic signal control principles, providing both numerical precision and visual interpretability for validation and implementation.
 
 CHAPTER 6 - SUMO Simulation Validation and Comparison

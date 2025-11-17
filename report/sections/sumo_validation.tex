@@ -4,11 +4,11 @@
 \section{Introduction to SUMO}
 \label{sec:sumo_intro}
 
-SUMO (Simulation of Urban MObility) is an open-source microscopic traffic simulator built for large networks. It lets us test signal plans in a realistic setting by simulating individual vehicles, their interactions, and behavior. Because it’s microscopic, we can measure intersection performance in ways that simple formulas can’t.
+SUMO (Simulation of Urban MObility) is an open-source microscopic traffic simulator built for large networks. It lets us test signal plans in a realistic setting by simulating individual vehicles, their interactions, and behavior. Because it's microscopic, we can measure intersection performance in ways that simple formulas can't.
 
 \subsection{Why SUMO Validation}
 
-Analytical methods like Webster’s formula give clean answers under ideal assumptions, but real traffic isn’t ideal—there are interactions, queues, and randomness. SUMO helps check whether optimized timings still hold up when those realities show up:
+Analytical methods like Webster's formula give clean answers under ideal assumptions, but real traffic isn't ideal—there are interactions, queues, and randomness. SUMO helps check whether optimized timings still hold up when those realities show up:
 \begin{itemize}
     \item Vehicle-to-vehicle interactions
     \item Queue formation and dissipation
@@ -53,7 +53,7 @@ Defines incoming and outgoing edges for each approach:
 
 \subsubsection{Network Compilation}
 
-We use SUMO’s \texttt{netconvert} to combine .nod and .edg into a complete network (.net.xml). It automatically generates:
+We use SUMO's \texttt{netconvert} to combine .nod and .edg into a complete network (.net.xml). It automatically generates:
 \begin{itemize}
     \item Internal lanes for turning movements
     \item Connection definitions between lanes
